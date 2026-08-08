@@ -1,0 +1,23 @@
+{
+  "name": "Samar College",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+        "$path": "src/shared"
+    },
+
+    "ServerScriptService": {
+        "$path": "src/server"
+    },
+
+    "StarterPlayer": {
+      "StarterCharacterScripts": {
+          "$path": "src/client"
+      },
+      "StarterPlayerScripts": {
+          "$path": "src/client"
+      }
+    }
+  }
+}
