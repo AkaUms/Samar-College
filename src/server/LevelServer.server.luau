@@ -1,6 +1,8 @@
 -- LevelServer: school level (Title) progression.
 -- New players start at Kindergarten. To unlock the next level a player must
---   1) have played the required total minutes (LevelConfig.RequiredMinutes), and
+--   1) spend the level's minutes AT their current level (LevelConfig.minutesFor) — this
+--      "level timer" is separate from total play time and resets after each passed quiz
+--      or when an admin promotes/demotes the player, and
 --   2) pass the quiz of their current highest level (server-graded).
 -- Players can switch freely between any level they already unlocked.
 local Players = game:GetService("Players")
@@ -33,8 +35,12 @@ local function onPlayer(player)
 	local selected = math.clamp(tonumber(data.SelectedLevel) or unlocked, 1, unlocked)
 	player:SetAttribute("LevelUnlocked", unlocked)
 	player:SetAttribute("SelectedLevel", selected)
-	player:SetAttribute("EventsJoined", tonumber(data.EventsJoined) or 0)
-	player:SetAttribute("QuizzesPassed", tonumber(data.QuizzesPassed) or 0)
+	for _, stat in ipairs(PlayerData.STATS) do player:SetAttribute(stat, tonumber(data[stat]) or 0) end
+	-- older saves had no level timer: carry over the time already earned toward the next quiz
+	if data.LevelTime == nil then
+		local spentBefore = (LevelConfig.Levels[unlocked] and LevelConfig.Levels[unlocked].RequiredMinutes or 0) * 60
+		PlayerData.setLevelTime(player, math.max(0, PlayerData.getTime(player) - spentBefore))
+	end
 	setTitle(player)
 	player:GetAttributeChangedSignal("SelectedLevel"):Connect(function() setTitle(player) end)
 end
@@ -57,9 +63,10 @@ remotes.StartQuiz.OnServerInvoke = function(player)
 	local current = player:GetAttribute("LevelUnlocked") or 1
 	if current >= MAX then return { ok = false, msg = "You already reached the highest level! 🎓" } end
 	local nextLevel = LevelConfig.Levels[current + 1]
-	local playedMin = PlayerData.getTime(player) / 60
-	if playedMin < nextLevel.RequiredMinutes then
-		return { ok = false, msg = string.format("Stay in the game %d more minute(s) to unlock the quiz.", math.ceil(nextLevel.RequiredMinutes - playedMin)) }
+	local playedMin = PlayerData.getLevelTime(player) / 60
+	local needMin = LevelConfig.minutesFor(current + 1)
+	if playedMin < needMin then
+		return { ok = false, msg = string.format("Stay in the game %d more minute(s) to unlock the quiz.", math.ceil(needMin - playedMin)) }
 	end
 	if cooldown[player] and os.clock() < cooldown[player] then
 		return { ok = false, msg = string.format("Review first! Try again in %d s.", math.ceil(cooldown[player] - os.clock())) }
@@ -103,6 +110,7 @@ remotes.SubmitQuiz.OnServerInvoke = function(player, picked)
 		player:SetAttribute("LevelUnlocked", newLevel)
 		player:SetAttribute("SelectedLevel", newLevel)
 		player:SetAttribute("QuizzesPassed", (player:GetAttribute("QuizzesPassed") or 0) + 1)
+		PlayerData.resetLevelTime(player) -- the timer for the next quiz starts over
 		feedback(player, "🎉 Congratulations! You are now " .. LevelConfig.name(newLevel) .. "!", true)
 		task.spawn(PlayerData.save, player)
 	else

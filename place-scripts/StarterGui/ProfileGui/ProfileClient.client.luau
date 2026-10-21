@@ -202,17 +202,19 @@ local function refresh()
 		quizBtn.Text = "Completed" quizBtn.BackgroundColor3 = C.locked quizBtn.TextColor3 = C.dim quizBtn.Active = false quizBtn.AutoButtonColor = false
 	else
 		local nxt = LevelConfig.Levels[unlocked + 1]
-		local needSec = nxt.RequiredMinutes * 60
-		local pct = needSec == 0 and 1 or math.clamp(time / needSec, 0, 1)
+		local needMin = LevelConfig.minutesFor(unlocked + 1)
+		local needSec = needMin * 60
+		local lvlTime = player:GetAttribute("LevelTimeSeconds") or 0
+		local pct = needSec == 0 and 1 or math.clamp(lvlTime / needSec, 0, 1)
 		nextTitle.Text = "Next: " .. nxt.Name
-		nextInfo.Text = "Play " .. nxt.RequiredMinutes .. " min total, then pass the " .. LevelConfig.name(unlocked) .. " quiz (" .. LevelConfig.PassScore .. "/" .. LevelConfig.QuestionsPerQuiz .. ")."
+		nextInfo.Text = "Play " .. needMin .. " min at " .. LevelConfig.name(unlocked) .. ", then pass its quiz (" .. LevelConfig.PassScore .. "/" .. LevelConfig.QuestionsPerQuiz .. "). Timer restarts each level."
 		barFill.Size = UDim2.fromScale(pct, 1)
-		barText.Text = string.format("%d/%d min", math.floor(time / 60), nxt.RequiredMinutes)
+		barText.Text = string.format("%d/%d min", math.floor(lvlTime / 60), needMin)
 		if pct >= 1 then
 			quizBtn.Text = "📝 Take " .. LevelConfig.name(unlocked) .. " Quiz" quizBtn.BackgroundColor3 = C.gold quizBtn.TextColor3 = C.green2
 			quizBtn.Active = true quizBtn.AutoButtonColor = true barFill.BackgroundColor3 = Color3.fromRGB(90, 210, 120)
 		else
-			local left = math.ceil((needSec - time) / 60)
+			local left = math.ceil((needSec - lvlTime) / 60)
 			quizBtn.Text = "⏳ Stay " .. left .. " more min" quizBtn.BackgroundColor3 = C.locked quizBtn.TextColor3 = C.dim
 			quizBtn.Active = false quizBtn.AutoButtonColor = false barFill.BackgroundColor3 = C.gold
 		end

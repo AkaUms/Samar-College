@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-21 (evening)
+- Admin panel (`AdminServer` + `AdminPanelGui/AdminClient`): player search, kick, timed ban / unban, reset progress, grade promote / demote, coins, items, consumables, event counts, co-admin management, Save button.
+- Level progression now uses a separate per-level quiz timer (`LevelTimeSeconds`); total play time is unchanged.
+- PlayerData saves the level timer and new event counters (Common, Rare, Parkour, Escape, Photobooth).
+
 ## 2026-10-21
 - Gate facade: gabled pediment, pilasters, arches, cornice and EXIT / ENTRANCE plaques based on the real campus front.
 - Samar College seal on the gable (redrawn in green to match the official logo); `SC_LogoData` + `SC_LogoDecoder` + `SC_LogoRenderer` show the exact logo when *Allow Mesh / Image APIs* is enabled.

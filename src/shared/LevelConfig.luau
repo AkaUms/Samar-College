@@ -38,4 +38,12 @@ end
 function LevelConfig.name(i) local l = LevelConfig.Levels[i] return l and l.Name or "?" end
 function LevelConfig.dept(i) local l = LevelConfig.Levels[i] return l and LevelConfig.Departments[l.Dept] end
 
+-- minutes a player must spend AT their current level before the quiz for level i unlocks
+-- (the gap between two levels' RequiredMinutes, so the total path length stays the same)
+function LevelConfig.minutesFor(i)
+	local cur, prev = LevelConfig.Levels[i], LevelConfig.Levels[i - 1]
+	if not cur then return 0 end
+	return math.max(0, cur.RequiredMinutes - (prev and prev.RequiredMinutes or 0))
+end
+
 return LevelConfig

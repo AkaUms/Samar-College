@@ -44,6 +44,15 @@ shop with campus coins, and meet other students in servers grouped by year level
 - [x] **Map** — tap a pin to teleport to campus places
 - [x] **Settings** — Elementary / Junior High+ server choice, music and sound-effect volume
 - [x] Day / night cycle, ceiling fans that spin
+- [x] **Admin panel** (`F2` or the 🛡 Admin button, owner + co-admins only)
+  - Find players by username, user ID, or from the in-server list (online or offline)
+  - Kick, timed ban (seconds / minutes / hours / days) and unban — works across servers
+  - Reset progress, promote / demote grade level (restarts the quiz timer)
+  - Edit Common / Event coins, add / remove cosmetics and equipment, set consumable amounts
+  - Edit Common / Rare / Quiz / Parkour / Escape / Photobooth event counts
+  - Owner can promote players to Co-Admin and remove them
+  - Changes apply only when **Save** is pressed
+- [x] **Separate quiz timer** — total time stays on the leaderboard; a per-level timer unlocks the next quiz and restarts after each level change
 
 ### Planned / to do
 - [ ] Publish the separate **Elementary server** place and set `ElementaryPlaceId` in `HUDConfig` (the Settings switch and teleport code are ready)

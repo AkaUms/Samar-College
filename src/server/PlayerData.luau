@@ -1,19 +1,47 @@
 -- PlayerData: saves & loads progress with DataStore.
--- Saved: play Time, Title, Common/Event coins, owned items, equipped items, consumable counts.
+-- Saved: total play Time, level timer, Title, level, Common/Event coins, owned items,
+-- equipped items, consumable counts and event statistics.
 local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 
 local PlayerData = {}
 PlayerData.DEFAULT_TITLE = "Junior"
+PlayerData.STORE_NAME = "SamarCollege_PlayerData_v1"
+PlayerData.STARTING_COINS = { Common = 200, Event = 50 }
+-- event / activity counters stored as player attributes
+PlayerData.STATS = { "EventsCommon", "EventsRare", "QuizzesPassed", "EventsParkour", "EventsEscape", "EventsPhotobooth", "EventsJoined" }
 
 local store
-local ok = pcall(function() store = DataStoreService:GetDataStore("SamarCollege_PlayerData_v1") end)
+local ok = pcall(function() store = DataStoreService:GetDataStore(PlayerData.STORE_NAME) end)
 if not ok then warn("[PlayerData] DataStore unavailable (enable Studio Access to API Services). Progress will not save.") end
 
 local cache = {}      -- userId -> loaded table
-local joinTime = {}   -- userId -> os.clock() when session time last counted
+local joinTime = {}   -- userId -> os.clock() when total time was last counted
+local levelJoin = {}  -- userId -> os.clock() when the level timer was last counted
 
-local function key(player) return "u_" .. player.UserId end
+function PlayerData.key(userId) return "u_" .. userId end
+local function key(player) return PlayerData.key(player.UserId) end
+
+-- a brand-new save (also used by "Reset progress")
+function PlayerData.fresh()
+	local d = { Time = 0, LevelTime = 0, Title = PlayerData.DEFAULT_TITLE, LevelUnlocked = 1, SelectedLevel = 1,
+		Coins = { Common = PlayerData.STARTING_COINS.Common, Event = PlayerData.STARTING_COINS.Event },
+		Owned = {}, Equipped = {}, Inventory = {} }
+	for _, s in ipairs(PlayerData.STATS) do d[s] = 0 end
+	return d
+end
+
+local function normalize(data)
+	data = type(data) == "table" and data or {}
+	data.Time = tonumber(data.Time) or 0
+	data.Title = data.Title or PlayerData.DEFAULT_TITLE
+	data.Coins = type(data.Coins) == "table" and data.Coins or nil
+	data.Owned = type(data.Owned) == "table" and data.Owned or {}
+	data.Equipped = type(data.Equipped) == "table" and data.Equipped or {}
+	data.Inventory = type(data.Inventory) == "table" and data.Inventory or {}
+	return data
+end
+PlayerData.normalize = normalize
 
 function PlayerData.load(player)
 	local data
@@ -28,19 +56,15 @@ function PlayerData.load(player)
 			task.wait(1)
 		end
 	end
-	data = type(data) == "table" and data or {}
-	data.Time = tonumber(data.Time) or 0
-	data.Title = data.Title or PlayerData.DEFAULT_TITLE
-	data.Coins = type(data.Coins) == "table" and data.Coins or nil
-	data.Owned = type(data.Owned) == "table" and data.Owned or {}
-	data.Equipped = type(data.Equipped) == "table" and data.Equipped or {}
-	data.Inventory = type(data.Inventory) == "table" and data.Inventory or {}
+	data = normalize(data)
 	cache[player.UserId] = data
 	joinTime[player.UserId] = os.clock()
+	levelJoin[player.UserId] = os.clock()
 	return data
 end
 
 function PlayerData.get(player) return cache[player.UserId] end
+function PlayerData.hasStore() return store ~= nil end
 
 -- total seconds played (saved + this session)
 function PlayerData.getTime(player)
@@ -48,15 +72,33 @@ function PlayerData.getTime(player)
 	if not d then return 0 end
 	return d.Time + (os.clock() - (joinTime[player.UserId] or os.clock()))
 end
+function PlayerData.setTime(player, seconds)
+	local d = cache[player.UserId]
+	if not d then return end
+	d.Time = math.max(0, seconds) joinTime[player.UserId] = os.clock()
+end
+
+-- seconds played since reaching the current level (counts toward the next quiz)
+function PlayerData.getLevelTime(player)
+	local d = cache[player.UserId]
+	if not d then return 0 end
+	return (tonumber(d.LevelTime) or 0) + (os.clock() - (levelJoin[player.UserId] or os.clock()))
+end
+function PlayerData.setLevelTime(player, seconds)
+	local d = cache[player.UserId]
+	if not d then return end
+	d.LevelTime = math.max(0, seconds) levelJoin[player.UserId] = os.clock()
+end
+function PlayerData.resetLevelTime(player) PlayerData.setLevelTime(player, 0) end
 
 local function snapshot(player)
 	local d = cache[player.UserId]
 	if not d then return nil end
-	local out = { Time = math.floor(PlayerData.getTime(player)), Coins = {}, Owned = {}, Equipped = {}, Inventory = {} }
+	local out = { Time = math.floor(PlayerData.getTime(player)), LevelTime = math.floor(PlayerData.getLevelTime(player)),
+		Coins = {}, Owned = {}, Equipped = {}, Inventory = {} }
 	out.LevelUnlocked = player:GetAttribute("LevelUnlocked") or d.LevelUnlocked or 1
 	out.SelectedLevel = player:GetAttribute("SelectedLevel") or d.SelectedLevel or 1
-	out.EventsJoined = player:GetAttribute("EventsJoined") or d.EventsJoined or 0
-	out.QuizzesPassed = player:GetAttribute("QuizzesPassed") or d.QuizzesPassed or 0
+	for _, s in ipairs(PlayerData.STATS) do out[s] = player:GetAttribute(s) or d[s] or 0 end
 	local ls = player:FindFirstChild("leaderstats")
 	out.Title = (ls and ls:FindFirstChild("Title") and ls.Title.Value) or d.Title
 	local wallet = player:FindFirstChild("Wallet")
@@ -71,6 +113,7 @@ local function snapshot(player)
 	if inv then for _, v in ipairs(inv:GetChildren()) do if v:IsA("IntValue") and v.Value > 0 then out.Inventory[v.Name] = v.Value end end end
 	return out
 end
+PlayerData.snapshot = snapshot
 
 function PlayerData.save(player)
 	if not store then return end
@@ -84,10 +127,26 @@ function PlayerData.save(player)
 	end
 end
 
+-- read / edit the save of a player who is NOT in this server
+function PlayerData.readOffline(userId)
+	if not store then return nil, "DataStore unavailable" end
+	local s, result = pcall(function() return store:GetAsync(PlayerData.key(userId)) end)
+	if not s then return nil, tostring(result) end
+	return normalize(result), nil, result ~= nil
+end
+function PlayerData.updateOffline(userId, fn)
+	if not store then return false, "DataStore unavailable" end
+	local s, err = pcall(function()
+		store:UpdateAsync(PlayerData.key(userId), function(old) return fn(normalize(old)) end)
+	end)
+	return s, err
+end
+
 function PlayerData.release(player)
 	PlayerData.save(player)
 	cache[player.UserId] = nil
 	joinTime[player.UserId] = nil
+	levelJoin[player.UserId] = nil
 end
 
 Players.PlayerRemoving:Connect(function(player) PlayerData.release(player) end)

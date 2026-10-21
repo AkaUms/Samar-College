@@ -16,7 +16,7 @@ local PlayerData = require(script.Parent:WaitForChild("PlayerData"))
 local Outfits = require(ReplicatedStorage:WaitForChild("Outfits"))
 
 -- Starting balances for NEW players (saved players load from PlayerData).
-local STARTING_TOKENS = { Common = 200, Event = 50 }
+local STARTING_TOKENS = PlayerData.STARTING_COINS
 local BASE_WALKSPEED = 16
 local BASE_JUMPPOWER = 50
 
@@ -252,6 +252,7 @@ local function onPlayerAdded(player)
 			local h, m, s = math.floor(t / 3600), math.floor(t % 3600 / 60), t % 60
 			timeValue.Value = (h > 0) and string.format("%dh %02dm", h, m) or string.format("%dm %02ds", m, s)
 			player:SetAttribute("PlayTimeSeconds", t)
+			player:SetAttribute("LevelTimeSeconds", math.floor(PlayerData.getLevelTime(player)))
 			task.wait(1)
 		end
 	end)
@@ -363,4 +364,14 @@ useItemRemote.OnServerEvent:Connect(function(player, itemId)
 		end
 		feedback(player, "Used " .. item.Name .. "!")
 	end
+end)
+
+-- Admin panel hook: re-apply equipment/cosmetics after an admin changes a player's items
+local ServerStorage = game:GetService("ServerStorage")
+local signals = ServerStorage:FindFirstChild("AdminSignals") or Instance.new("Folder")
+signals.Name = "AdminSignals" signals.Parent = ServerStorage
+local refreshGear = signals:FindFirstChild("RefreshGear") or Instance.new("BindableEvent")
+refreshGear.Name = "RefreshGear" refreshGear.Parent = signals
+refreshGear.Event:Connect(function(player)
+	if player and player.Parent then refreshEquipment(player) refreshCosmetic(player) end
 end)
