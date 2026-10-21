@@ -1,6 +1,8 @@
 # Changelog
 
 ## 2026-10-21 (night)
+- SHS Faculty Room (`FacultyRoom_SHS_2F`), from real photos. Outside: cream wall, black window frames, green curtains behind the glass, projecting "SENIOR HIGH SCHOOL FACULTY ROOM" sign, "Faculty only" plate, black grooved door with round knob. Inside: 6 teacher workstations with computers, name plates and chairs, SHS Faculty Bulletin (meeting, deadlines, advisers), learning-module shelf, steel cabinet, meeting table with monobloc chairs, stacked chairs, water dispenser, mini fridge with kettle, split aircon, clock, lights.
+- Records Office and Faculty Room doors now show their black colour (union used its own wood colour before).
 - SHS Records Office (`RecordsOffice_SHS_2F`), from real photos. Outside: cream wall, transom window strip, "Senior High School Records Office" sign, projecting "SENIOR HIGH SCHOOL RECORD SECTION" sign, SAVE ENERGY sign and switch, SHS Enrollment tarpaulin (academic tracks + requirements), waiting chairs; black panelled door with view window, document slot, lever and deadbolt. Inside: record shelves with labelled archive boxes and folders, steel cabinets, filing cabinets, 2 staff desks with computers, printer table, visitor chair, Document Requests board, split aircon, clock, lights.
 - SSLG Office interior (`SSLG_Office_2F`): cream walls, tiled floor, fluorescent lights, SSLG tarpaulin, Philippine flag, conference table with monobloc chairs, officer's desk with computer, filing cabinet, bookshelf with binders and trophies, whiteboard meeting agenda, officers and announcement boards, ballot box and suggestion box, water dispenser, wall fan, clock, trash bin and plant.
 - Stair hall outside: cream soffits under the stair flights and landing, wire bundle along the wall top.
