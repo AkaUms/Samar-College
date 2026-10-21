@@ -40,7 +40,7 @@ shop with campus coins, and meet other students in servers grouped by year level
 - [x] **Saving** — play time, level, coins and items saved with DataStore (`PlayerData`)
 - [x] **Seats** use an `E` "Sit" prompt (no accidental sitting) via the `PromptSeat` tag
 - [x] **NPCs** — patrolling guards, cashier, teacher with dialog
-- [x] **Proximity voice chat** with a speaking indicator above players' heads
+- [x] **Proximity voice chat** (mic on/off through Roblox settings)
 - [x] **Map** — tap a pin to teleport to campus places
 - [x] **Settings** — Elementary / Junior High+ server choice, music and sound-effect volume
 - [x] Day / night cycle, ceiling fans that spin

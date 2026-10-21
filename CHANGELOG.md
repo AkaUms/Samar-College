@@ -5,7 +5,7 @@
 - Samar College seal on the gable (redrawn in green to match the official logo); `SC_LogoData` + `SC_LogoDecoder` + `SC_LogoRenderer` show the exact logo when *Allow Mesh / Image APIs* is enabled.
 - ID scanner turnstiles at Entry and Exit: single passage, 2 wall-mounted ID readers, flap gate, 2 ceiling-hung monitors with a digital student ID.
 - Driveway: railings, painted curbs, lane markings, speed humps, zebra crossing, ceiling and wall lights, signs.
-- Proximity voice chat speaking indicator (`VoiceSupport`).
+- Proximity voice chat speaking indicator (`VoiceSupport`) — removed again on request; voice uses Roblox defaults.
 
 ## 2026-10-20
 - Main gate (double swing, prompts + control button, auto-close) and full-size Entry / Exit pedestrian gates.
