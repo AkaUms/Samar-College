@@ -89,4 +89,11 @@ Every synced service has `ignoreUnknownInstances` turned on, so Rojo **only upda
 
 ---
 
-*Made by Umi Ezekiel O. Bandilla — BSIT-4, Samar College.*
+## Team
+
+**TEAM PRUC** — BSIT-4, Samar College
+
+- Umi Ezekiel O. Bandilla
+- Chris Diocton
+- Philip Brian Olleta
+- Rajeth Jamorawon
