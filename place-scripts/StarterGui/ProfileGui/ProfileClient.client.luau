@@ -24,14 +24,23 @@ local function label(parent, text, size, font, color, props)
 end
 
 -- ===================== MAIN PANEL =====================
-local dim = Instance.new("Frame") dim.Name = "Dim" dim.Size = UDim2.fromScale(1, 1) dim.BackgroundColor3 = Color3.new(0, 0, 0)
+-- dark background covers the WHOLE screen (also the top bar, notch and rounded corners on phones)
+pcall(function() gui.ClipToDeviceSafeArea = false end)
+local dim = Instance.new("Frame") dim.Name = "Dim" dim.Position = UDim2.fromOffset(-400, -400) dim.Size = UDim2.new(1, 800, 1, 800)
+dim.BorderSizePixel = 0 dim.BackgroundColor3 = Color3.new(0, 0, 0)
 dim.BackgroundTransparency = 0.45 dim.Visible = false dim.Parent = gui
-local panel = Instance.new("Frame") panel.Name = "Panel" panel.AnchorPoint = Vector2.new(0.5, 0.5) panel.Position = UDim2.fromScale(0.5, 0.52)
+local panel = Instance.new("Frame") panel.Name = "Panel" panel.AnchorPoint = Vector2.new(0.5, 0.5) panel.Position = UDim2.fromScale(0.5, 0.5)
 panel.Size = UDim2.fromOffset(680, 560) panel.BackgroundColor3 = C.bg panel.Visible = false panel.Parent = gui
 corner(panel, 18) stroke(panel, C.stroke, 1.4)
 local pscale = Instance.new("UIScale") pscale.Parent = panel
-local function rescale() local v = workspace.CurrentCamera.ViewportSize pscale.Scale = math.min(1, (v.X - 40) / 680, (v.Y - 60) / 560) end
+-- fit any device: use the usable screen area (without the top bar / notch), not the raw viewport
+local function rescale()
+	local v = gui.AbsoluteSize
+	if v.X < 2 then v = workspace.CurrentCamera.ViewportSize end
+	pscale.Scale = math.clamp(math.min((v.X - 16) / 680, (v.Y - 12) / 560), 0.3, 1)
+end
 rescale() workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(rescale)
 
 -- header
 local header = Instance.new("Frame") header.Name = "Header" header.Size = UDim2.new(1, 0, 0, 96) header.BackgroundColor3 = C.green header.Parent = panel
@@ -58,7 +67,7 @@ cc.Font = Enum.Font.GothamBlack cc.TextSize = 13 cc.TextColor3 = C.green2 cc.Par
 label(crest, "SAMAR\nCOLLEGE", 11, Enum.Font.GothamBlack, C.text, { Position = UDim2.fromOffset(44, 5), Size = UDim2.fromOffset(72, 34), TextYAlignment = Enum.TextYAlignment.Center, LineHeight = 0.95 })
 
 local close = Instance.new("TextButton") close.Name = "Close" close.AnchorPoint = Vector2.new(1, 0) close.Position = UDim2.new(1, -12, 0, 12)
-close.Size = UDim2.fromOffset(34, 34) close.BackgroundColor3 = C.green2 close.Text = "✕" close.Font = Enum.Font.GothamBold close.TextSize = 16
+close.Size = UDim2.fromOffset(34, 34) close.BackgroundColor3 = C.green2 close.Text = "X" close.Font = Enum.Font.GothamBold close.TextSize = 16
 close.TextColor3 = C.text close.Parent = header corner(close, 17)
 
 -- scrolling body

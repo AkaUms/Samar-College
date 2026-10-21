@@ -65,12 +65,19 @@ local function row(parent, h, order)
 end
 
 ---------------------------------------------------------------- shell
-local dim = frame(gui, UDim2.fromScale(1, 1), nil, Color3.new(0, 0, 0)) dim.BackgroundTransparency = 0.45 dim.Visible = false dim.Active = true
+pcall(function() gui.ClipToDeviceSafeArea = false end)
+local dim = frame(gui, UDim2.new(1, 800, 1, 800), UDim2.fromOffset(-400, -400), Color3.new(0, 0, 0)) dim.BackgroundTransparency = 0.45 dim.Visible = false dim.Active = true
+dim.AnchorPoint = Vector2.zero dim.Position = UDim2.fromOffset(-400, -400) dim.BorderSizePixel = 0
 local panel = frame(gui, UDim2.fromOffset(940, 600), UDim2.fromScale(0.5, 0.5), C.bg, "AdminPanel")
 panel.AnchorPoint = Vector2.new(0.5, 0.5) panel.Visible = false corner(panel, 16) stroke(panel, C.gold, 1.6)
 local scale = Instance.new("UIScale") scale.Parent = panel
-local function rescale() local v = workspace.CurrentCamera.ViewportSize scale.Scale = math.min(1, (v.X - 20) / 940, (v.Y - 30) / 600) end
+local function rescale()
+	local v = gui.AbsoluteSize
+	if v.X < 2 then v = workspace.CurrentCamera.ViewportSize end
+	scale.Scale = math.clamp(math.min((v.X - 16) / 940, (v.Y - 12) / 600), 0.3, 1)
+end
 rescale() workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(rescale)
 
 local head = frame(panel, UDim2.new(1, 0, 0, 58), nil, C.green) corner(head, 16)
 frame(head, UDim2.new(1, 0, 0, 16), UDim2.new(0, 0, 1, -16), C.green)
