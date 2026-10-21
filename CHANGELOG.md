@@ -1,6 +1,8 @@
 # Changelog
 
 ## 2026-10-21 (night)
+- SSLG Office interior (`SSLG_Office_2F`): cream walls, tiled floor, fluorescent lights, SSLG tarpaulin, Philippine flag, conference table with monobloc chairs, officer's desk with computer, filing cabinet, bookshelf with binders and trophies, whiteboard meeting agenda, officers and announcement boards, ballot box and suggestion box, water dispenser, wall fan, clock, trash bin and plant.
+- Stair hall outside: cream soffits under the stair flights and landing, wire bundle along the wall top.
 - Stair hall beside the SSLG office (2nd floor) detailed from a real photo: cream walls, "THIS WAY – THIRD FLOOR" sign, light switch and conduit, SSLG OFFICE plaque and notice on the door, vent blocks, CCTV dome with coiled cable, warning sign, ceiling bulb, blue drum, metal grille cabinet, old wall boards, wooden louvers above the stairs, orange PVC pipe, yellow arrows on the steps (`StairHall_2F_Details`). Roof downspout that ran in front of the door now stops at the ceiling.
 - Stair railings between the flights rebuilt to follow the steps' angle and reach the bottom step / top railing.
 - Rooms 202, 204, 302, 303, 304, 305 changed to Senior High School classrooms: Grade 11 STEM A, HUMSS A, GAS A and Grade 12 TVL-ICT A, ABM A, STEM B — SHS subjects on the board, TV and schedules, door signs, "ADVISER" nameplate, SHS banner. Originals backed up in ServerStorage.Backup_Classrooms_PreSHS.
