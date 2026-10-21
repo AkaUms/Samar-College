@@ -9,6 +9,24 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local gui = script.Parent
+
+-- fit any device (phones, tablets, PC): shrink the window to the usable screen area
+do
+	local fitMain = gui:WaitForChild("Main")
+	local fitScale = fitMain:FindFirstChild("FitScale") or Instance.new("UIScale")
+	fitScale.Name = "FitScale" fitScale.Parent = fitMain
+	local baseW, baseH = fitMain.Size.X.Offset, fitMain.Size.Y.Offset
+	local function fit()
+		local v = gui.AbsoluteSize
+		if v.Y < 2 then v = workspace.CurrentCamera.ViewportSize end
+		fitScale.Scale = math.clamp(math.min((v.X - 16) / baseW, (v.Y - 12) / baseH), 0.3, 1)
+	end
+	fit()
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(fit)
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
+	gui:GetPropertyChangedSignal("Enabled"):Connect(fit)
+end
+
 local main = gui:WaitForChild("Main")
 local content = main:WaitForChild("Content")
 local template = content:WaitForChild("SlotTemplate")
@@ -26,12 +44,7 @@ closeButton.MouseButton1Click:Connect(function()
 	gui.Enabled = false
 end)
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.I then
-		gui.Enabled = not gui.Enabled
-	end
-end)
+-- [I] now opens the main Bag (MainHUD). This window still opens from the Cashier's Inventory button.
 
 local shopItems = nil
 local catalog = ReplicatedStorage:WaitForChild("ShopItems", 10)
