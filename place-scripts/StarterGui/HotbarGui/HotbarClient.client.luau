@@ -36,7 +36,11 @@ local scale = Instance.new("UIScale") scale.Parent = holder
 -- fit any screen: phones (Android / iPhone), tablets, PC. On touch screens keep clear of the
 -- thumbstick (bottom-left) and jump button (bottom-right).
 local BASE_W, BASE_H = SLOTS * 62 + 24, 84 + 24 -- bar + title line above it
-local function isTouch() return UIS.TouchEnabled and not UIS.KeyboardEnabled end
+local function isTouch()
+	-- phones / tablets (also when testing with Studio's device emulator)
+	local v = workspace.CurrentCamera.ViewportSize
+	return UIS.TouchEnabled and (not UIS.KeyboardEnabled or math.min(v.X, v.Y) < 900)
+end
 local function rescale()
 	local vp = gui.AbsoluteSize
 	if vp.X < 2 then vp = workspace.CurrentCamera.ViewportSize end
@@ -44,7 +48,7 @@ local function rescale()
 	local side = 16
 	if isTouch() then side = short <= 500 and 105 or 150 end -- jump button / thumbstick zones
 	local availW = math.max(vp.X - side * 2, 200)
-	local availH = vp.Y * (isTouch() and 0.23 or 0.16)
+	local availH = vp.Y * (isTouch() and 0.25 or 0.16)
 	scale.Scale = math.clamp(math.min(availW / BASE_W, availH / BASE_H, 1), 0.42, 1)
 	holder.Position = UDim2.new(0.5, 0, 1, isTouch() and -8 or -14)
 end
@@ -60,7 +64,7 @@ title.TextColor3 = C.text title.Text = "🎒 INVENTORY" title.TextStrokeTranspar
 local hint = title:Clone() hint.Name = "Hint" hint.AnchorPoint = Vector2.new(1, 1) hint.Position = UDim2.new(1, -14, 0, -2)
 hint.TextXAlignment = Enum.TextXAlignment.Right hint.Font = Enum.Font.Gotham hint.TextSize = 12 hint.TextColor3 = C.dim
 hint.Text = "1-9 to use  •  [I] Bag" hint.Parent = holder
-local function hintTail() return (UIS.TouchEnabled and not UIS.KeyboardEnabled) and "Tap to use" or "1-9 to use  •  [I] Bag" end
+local function hintTail() return isTouch() and "Tap to use" or "1-9 to use  •  [I] Bag" end
 
 local row = Instance.new("Frame") row.BackgroundTransparency = 1 row.Position = UDim2.fromOffset(12, 12) row.Size = UDim2.new(1, -24, 0, 58) row.Parent = holder
 local lay = Instance.new("UIListLayout") lay.FillDirection = Enum.FillDirection.Horizontal lay.Padding = UDim.new(0, 6)

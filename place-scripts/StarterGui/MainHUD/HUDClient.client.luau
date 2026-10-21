@@ -38,12 +38,29 @@ end
 
 -- shrink everything on small (phone) screens
 local scale = gui:WaitForChild("AutoScale")
+local UIS_ = game:GetService("UserInputService")
+local railLayout = rail:FindFirstChildOfClass("UIListLayout")
 local function rescale()
-	local cam = workspace.CurrentCamera
-	if cam then scale.Scale = math.clamp(cam.ViewportSize.Y / 760, 0.6, 1) end
+	local v = gui.AbsoluteSize
+	if v.Y < 2 then v = workspace.CurrentCamera.ViewportSize end
+	local s = math.clamp(v.Y / 760, v.Y < 330 and 0.55 or 0.6, 1) -- short phones (Galaxy S/A) a bit smaller
+	scale.Scale = s
+	-- side buttons: size the rail to its buttons (Profile, Bag, Map, Admin)
+	local contentH = railLayout and (railLayout.AbsoluteContentSize.Y / math.max(s, 0.01)) or 240
+	rail.Size = UDim2.fromOffset(72, math.max(contentH, 60))
+	if UIS_.TouchEnabled and v.Y < 700 then
+		-- phones: keep the buttons near the top so the thumbstick (bottom-left) never covers them
+		rail.AnchorPoint = Vector2.new(0, 0)
+		rail.Position = UDim2.fromOffset(10, 6)
+	else
+		rail.AnchorPoint = Vector2.new(0, 0.5)
+		rail.Position = UDim2.new(0, 14, 0.5, 0)
+	end
 end
 rescale()
 workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(rescale)
+if railLayout then railLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(rescale) end
 
 ------------------------------------------------------------ page switching
 local PAGES = {

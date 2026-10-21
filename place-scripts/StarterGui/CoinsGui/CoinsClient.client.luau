@@ -17,8 +17,15 @@ bar.Position = UDim2.new(0.5, 0, 0, 10) bar.Size = UDim2.fromOffset(312, 52)
 bar.BackgroundColor3 = C.panel bar.BackgroundTransparency = 0.12 bar.Parent = gui
 corner(bar, 14) stroke(bar, C.stroke, 1.2)
 local scale = Instance.new("UIScale") scale.Parent = bar
-local function rescale() scale.Scale = math.clamp(workspace.CurrentCamera.ViewportSize.X / 700, 0.6, 1) end
+-- fit any device (phones get a smaller bar so it doesn't cover the game)
+local function rescale()
+	local v = gui.AbsoluteSize
+	if v.Y < 2 then v = workspace.CurrentCamera.ViewportSize end
+	scale.Scale = math.clamp(math.min(v.X / 700, v.Y / 600), 0.55, 1)
+	bar.Position = UDim2.new(0.5, 0, 0, v.Y < 500 and 4 or 10)
+end
 rescale() workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(rescale)
 local lay = Instance.new("UIListLayout") lay.FillDirection = Enum.FillDirection.Horizontal lay.VerticalAlignment = Enum.VerticalAlignment.Center
 lay.HorizontalAlignment = Enum.HorizontalAlignment.Center lay.Padding = UDim.new(0, 8) lay.SortOrder = Enum.SortOrder.LayoutOrder lay.Parent = bar
 
