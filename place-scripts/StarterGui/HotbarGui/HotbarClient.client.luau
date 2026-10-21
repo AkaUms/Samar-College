@@ -33,8 +33,25 @@ holder.Position = UDim2.new(0.5, 0, 1, -14) holder.Size = UDim2.fromOffset(SLOTS
 holder.BackgroundColor3 = C.panel holder.BackgroundTransparency = 0.18 holder.Parent = gui
 corner(holder, 16) stroke(holder, C.stroke, 1.2)
 local scale = Instance.new("UIScale") scale.Parent = holder
-local function rescale() local w = workspace.CurrentCamera.ViewportSize.X scale.Scale = math.clamp(w / (SLOTS * 62 + 60), 0.55, 1) end
-rescale() workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+-- fit any screen: phones (Android / iPhone), tablets, PC. On touch screens keep clear of the
+-- thumbstick (bottom-left) and jump button (bottom-right).
+local BASE_W, BASE_H = SLOTS * 62 + 24, 84 + 24 -- bar + title line above it
+local function isTouch() return UIS.TouchEnabled and not UIS.KeyboardEnabled end
+local function rescale()
+	local vp = gui.AbsoluteSize
+	if vp.X < 2 then vp = workspace.CurrentCamera.ViewportSize end
+	local short = math.min(vp.X, vp.Y)
+	local side = 16
+	if isTouch() then side = short <= 500 and 105 or 150 end -- jump button / thumbstick zones
+	local availW = math.max(vp.X - side * 2, 200)
+	local availH = vp.Y * (isTouch() and 0.23 or 0.16)
+	scale.Scale = math.clamp(math.min(availW / BASE_W, availH / BASE_H, 1), 0.42, 1)
+	holder.Position = UDim2.new(0.5, 0, 1, isTouch() and -8 or -14)
+end
+rescale()
+workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
+gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(rescale)
+UIS.LastInputTypeChanged:Connect(rescale)
 
 local title = Instance.new("TextLabel") title.Name = "Title" title.BackgroundTransparency = 1
 title.AnchorPoint = Vector2.new(0, 1) title.Position = UDim2.new(0, 14, 0, -2) title.Size = UDim2.fromOffset(260, 20)
@@ -43,6 +60,7 @@ title.TextColor3 = C.text title.Text = "🎒 INVENTORY" title.TextStrokeTranspar
 local hint = title:Clone() hint.Name = "Hint" hint.AnchorPoint = Vector2.new(1, 1) hint.Position = UDim2.new(1, -14, 0, -2)
 hint.TextXAlignment = Enum.TextXAlignment.Right hint.Font = Enum.Font.Gotham hint.TextSize = 12 hint.TextColor3 = C.dim
 hint.Text = "1-9 to use  •  [I] Bag" hint.Parent = holder
+local function hintTail() return (UIS.TouchEnabled and not UIS.KeyboardEnabled) and "Tap to use" or "1-9 to use  •  [I] Bag" end
 
 local row = Instance.new("Frame") row.BackgroundTransparency = 1 row.Position = UDim2.fromOffset(12, 12) row.Size = UDim2.new(1, -24, 0, 58) row.Parent = holder
 local lay = Instance.new("UIListLayout") lay.FillDirection = Enum.FillDirection.Horizontal lay.Padding = UDim.new(0, 6)
@@ -97,6 +115,37 @@ end
 local function holdingTool(name) local ch = player.Character return ch and ch:FindFirstChild(name) and ch[name]:IsA("Tool") end
 
 local function refresh()
+
+-- ===== hide while a menu is open (Bag, Map, Settings, Profile, Admin, Shop) =====
+local playerGui = player:WaitForChild("PlayerGui")
+local MENUS = {
+	{ "MainHUD", "Panel" },          -- Bag / Map / Settings
+	{ "ProfileGui", "Panel" },       -- Profile
+	{ "AdminPanelGui", "AdminPanel" }, -- Admin (admins only)
+}
+local SCREEN_MENUS = { "InventoryGui", "ShopGui" } -- whole ScreenGuis that open as menus
+local function menuOpen()
+	for _, m in ipairs(MENUS) do
+		local g = playerGui:FindFirstChild(m[1])
+		local f = g and g:FindFirstChild(m[2])
+		if f and f:IsA("GuiObject") and f.Visible and (not g:IsA("ScreenGui") or g.Enabled) then return true end
+	end
+	for _, n in ipairs(SCREEN_MENUS) do
+		local g = playerGui:FindFirstChild(n)
+		if g and g:IsA("ScreenGui") and g.Enabled then return true end
+	end
+	return false
+end
+task.spawn(function()
+	while gui.Parent do
+		local show = not menuOpen()
+		if holder.Visible ~= show then
+			holder.Visible = show
+			if not show then tip.Visible = false end
+		end
+		task.wait(0.1)
+	end
+end)
 	local list = collect()
 	empty.Visible = (#list == 0)
 	for i, s in ipairs(slots) do
@@ -119,7 +168,7 @@ local function refresh()
 		s.button.BackgroundTransparency = s.item and 0 or 0.45
 	end
 	local total = #list
-	hint.Text = (total > SLOTS and ("+" .. (total - SLOTS) .. " more in Bag  •  ") or "") .. "1-9 to use  •  [I] Bag"
+	hint.Text = (total > SLOTS and ("+" .. (total - SLOTS) .. " more in Bag  •  ") or "") .. hintTail()
 end
 
 local function pulse(s, col)
@@ -168,7 +217,7 @@ end
 
 local KEYS = { Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four, Enum.KeyCode.Five, Enum.KeyCode.Six, Enum.KeyCode.Seven, Enum.KeyCode.Eight, Enum.KeyCode.Nine }
 UIS.InputBegan:Connect(function(input, processed)
-	if processed then return end
+	if processed or not holder.Visible then return end
 	for i, k in ipairs(KEYS) do if input.KeyCode == k then activate(i) return end end
 end)
 
