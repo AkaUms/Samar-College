@@ -432,8 +432,8 @@ local function setInvisible(p, on)
 		if invisSaved[char] then return end
 		local saved = {}
 		for _, d in ipairs(char:GetDescendants()) do
-			if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then saved[d] = { "Transparency", d.Transparency } d.Transparency = 1
-			elseif d:IsA("Decal") or d:IsA("Texture") then saved[d] = { "Transparency", d.Transparency } d.Transparency = 1
+			if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then saved[d] = { "Transparency", d.Transparency } d.Transparency = 1 d:SetAttribute("AdminHidden", true)
+			elseif d:IsA("Decal") or d:IsA("Texture") then saved[d] = { "Transparency", d.Transparency } d.Transparency = 1 d:SetAttribute("AdminHidden", true)
 			elseif d:IsA("BillboardGui") or d:IsA("SurfaceGui") then saved[d] = { "Enabled", d.Enabled } d.Enabled = false
 			elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") or d:IsA("PointLight") then saved[d] = { "Enabled", d.Enabled } d.Enabled = false end
 		end
@@ -444,15 +444,20 @@ local function setInvisible(p, on)
 		saved.__conn = char.DescendantAdded:Connect(function(d)
 			task.defer(function()
 				if not invisSaved[char] then return end
-				if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then invisSaved[char][d] = { "Transparency", d.Transparency } d.Transparency = 1
-				elseif d:IsA("Decal") then invisSaved[char][d] = { "Transparency", d.Transparency } d.Transparency = 1 end
+				if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then invisSaved[char][d] = { "Transparency", d.Transparency } d.Transparency = 1 d:SetAttribute("AdminHidden", true)
+				elseif d:IsA("Decal") or d:IsA("Texture") then invisSaved[char][d] = { "Transparency", d.Transparency } d.Transparency = 1 d:SetAttribute("AdminHidden", true) end
 			end)
 		end)
 	else
 		local saved = invisSaved[char]
 		if not saved then return end
 		if saved.__conn then saved.__conn:Disconnect() saved.__conn = nil end
-		for inst, v in pairs(saved) do if typeof(inst) == "Instance" and inst.Parent then inst[v[1]] = v[2] end end
+		for inst, v in pairs(saved) do
+			if typeof(inst) == "Instance" and inst.Parent then
+				if inst:GetAttribute("AdminHidden") then inst:SetAttribute("AdminHidden", nil) end
+				inst[v[1]] = v[2]
+			end
+		end
 		invisSaved[char] = nil
 	end
 end

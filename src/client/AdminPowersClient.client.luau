@@ -1,7 +1,7 @@
 -- AdminPowersClient: client side of the admin powers (set by AdminServer through player attributes).
 --   AdminFly + AdminFlySpeed : fly (WASD / thumbstick to move, Space / E up, Ctrl / Q down)
 --   AdminGod                 : the humanoid can't enter the Dead state
---   AdminInvisible           : you see a faint outline of yourself while invisible to others
+--   AdminInvisible           : you see yourself at 10% opacity (your screen only); everyone else sees nothing
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
@@ -52,7 +52,31 @@ local function startFly()
 	end)
 end
 
-local highlight
+-- invisible self-view: local-only transparency on the parts the server hid (tagged "AdminHidden")
+local SELF_TRANSPARENCY = 0.9 -- 10% visible
+local selfConns = {}
+local selfViewOn = false
+local function clearSelfView()
+	for _, c in ipairs(selfConns) do c:Disconnect() end
+	selfConns = {}
+end
+local function isVisual(d) return d:IsA("BasePart") or d:IsA("Decal") or d:IsA("Texture") end
+local function applySelf(inst)
+	if player:GetAttribute("AdminInvisible") and inst:GetAttribute("AdminHidden") and inst.Transparency > SELF_TRANSPARENCY then
+		inst.Transparency = SELF_TRANSPARENCY
+	end
+end
+local function watch(inst)
+	applySelf(inst)
+	table.insert(selfConns, inst:GetPropertyChangedSignal("Transparency"):Connect(function() applySelf(inst) end))
+	table.insert(selfConns, inst:GetAttributeChangedSignal("AdminHidden"):Connect(function() applySelf(inst) end))
+end
+local function startSelfView(char)
+	clearSelfView()
+	for _, d in ipairs(char:GetDescendants()) do if isVisual(d) then watch(d) end end
+	table.insert(selfConns, char.DescendantAdded:Connect(function(d) if isVisual(d) then watch(d) end end))
+end
+
 local function refresh()
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -60,23 +84,20 @@ local function refresh()
 	if player:GetAttribute("AdminFly") then if not flying then startFly() end elseif flying then stopFly() end
 	-- god
 	if hum then hum:SetStateEnabled(Enum.HumanoidStateType.Dead, not player:GetAttribute("AdminGod")) end
-	-- invisible: outline only on your own screen
+	-- invisible: you see yourself faintly; nothing here replicates to other players
 	if player:GetAttribute("AdminInvisible") and char then
-		if not highlight or highlight.Parent ~= char then
-			if highlight then highlight:Destroy() end
-			highlight = Instance.new("Highlight") highlight.Name = "AdminInvisibleSelf"
-			highlight.FillTransparency = 0.85 highlight.OutlineTransparency = 0.2
-			highlight.FillColor = Color3.fromRGB(150, 200, 255) highlight.OutlineColor = Color3.fromRGB(150, 200, 255)
-			highlight.DepthMode = Enum.HighlightDepthMode.Occluded highlight.Parent = char
-		end
-	elseif highlight then highlight:Destroy() highlight = nil end
+		if not selfViewOn then selfViewOn = true startSelfView(char) end
+	elseif selfViewOn then
+		selfViewOn = false clearSelfView() -- the server restores the real transparency
+	end
 end
 
 for _, a in ipairs({ "AdminFly", "AdminFlySpeed", "AdminGod", "AdminInvisible" }) do
 	player:GetAttributeChangedSignal(a):Connect(refresh)
 end
 player.CharacterAdded:Connect(function(char)
-	flying = false flyConn = nil lv = nil ao = nil att = nil highlight = nil
+	flying = false flyConn = nil lv = nil ao = nil att = nil
+	selfViewOn = false clearSelfView()
 	char:WaitForChild("HumanoidRootPart", 10) char:WaitForChild("Humanoid", 10)
 	task.wait(0.5)
 	refresh()
