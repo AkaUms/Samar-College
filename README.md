@@ -50,6 +50,8 @@ shop with campus coins, and meet other students in servers grouped by year level
   - Reset progress, promote / demote grade level (restarts the quiz timer)
   - Edit Common / Event coins, add / remove cosmetics and equipment, set consumable amounts
   - Edit Common / Rare / Quiz / Parkour / Escape / Photobooth event counts
+  - **Powers** (instant on/off, players in the server): invisible, god mode, fly (with speed), walk speed
+  - **Banned players** list with one-click Unban
   - Owner can promote players to Co-Admin and remove them
   - Changes apply only when **Save** is pressed
 - [x] **Separate quiz timer** — total time stays on the leaderboard; a per-level timer unlocks the next quiz and restarts after each level change

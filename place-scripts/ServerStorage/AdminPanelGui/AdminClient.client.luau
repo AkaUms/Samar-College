@@ -31,7 +31,9 @@ local function label(parent, text, size, font, col, props)
 	local l = Instance.new("TextLabel") l.BackgroundTransparency = 1 l.Text = text l.TextSize = size or 14
 	l.Font = font or Enum.Font.GothamBold l.TextColor3 = col or C.text l.TextXAlignment = Enum.TextXAlignment.Left
 	l.Size = UDim2.new(1, 0, 0, (size or 14) + 6) l.TextWrapped = true
-	for k, v in pairs(props or {}) do l[k] = v end l.Parent = parent return l
+	for k, v in pairs(props or {}) do l[k] = v end
+	if not (props and props.Size) then l.AutomaticSize = Enum.AutomaticSize.Y end -- long text wraps onto more lines
+	l.Parent = parent return l
 end
 local function button(parent, text, col, size, props)
 	local b = Instance.new("TextButton") b.AutoButtonColor = true b.BackgroundColor3 = col or C.card b.Text = text
@@ -118,7 +120,7 @@ local function makePage(name, order)
 	local sf = Instance.new("ScrollingFrame") sf.Name = name sf.Size = UDim2.fromScale(1, 1) sf.BackgroundTransparency = 1 sf.BorderSizePixel = 0
 	sf.ScrollBarThickness = 6 sf.AutomaticCanvasSize = Enum.AutomaticSize.Y sf.CanvasSize = UDim2.new() sf.Visible = false sf.Parent = pages
 	pad(sf, 12) list(sf, 10)
-	local b = button(tabsBar, name, C.card, UDim2.fromOffset(122, 32), { LayoutOrder = order, TextSize = 13 })
+	local b = button(tabsBar, name, C.card, UDim2.fromOffset(101, 32), { LayoutOrder = order, TextSize = 12 })
 	pageFrames[name] = sf tabButtons[name] = b
 	b.MouseButton1Click:Connect(function() showPageRef(name) end)
 	return sf
@@ -161,7 +163,8 @@ local pMod = makePage("Moderation", 1)
 local pGrade = makePage("Grade & Coins", 2)
 local pItems = makePage("Items", 3)
 local pStats = makePage("Events & Stats", 4)
-local pAdmins = makePage("Admins", 5)
+local pPowers = makePage("Powers", 5)
+local pAdmins = makePage("Admins", 6)
 
 -- MODERATION
 local kickCard = cardSection(pMod, "👢  Kick from server", 1)
@@ -185,7 +188,11 @@ local banBtns = row(banCard, 34)
 local banB = button(banBtns, "Ban Player", C.red, UDim2.fromOffset(150, 34))
 local unbanB = button(banBtns, "Unban", C.card, UDim2.fromOffset(110, 34))
 
-local resetCard = cardSection(pMod, "♻  Reset progress", 3)
+local banListCard = cardSection(pMod, "📋  Banned players", 3)
+local banListNote = label(banListCard, "Everyone who is banned right now. Unban works even if they are offline.", 12, Enum.Font.Gotham, C.dim)
+local banListRefresh = button(banListCard, "Refresh list", C.card, UDim2.fromOffset(120, 28), { TextSize = 12 })
+local banListHolder = frame(banListCard, UDim2.new(1, 0, 0, 0), nil, C.card) banListHolder.BackgroundTransparency = 1 banListHolder.AutomaticSize = Enum.AutomaticSize.Y list(banListHolder, 6)
+local resetCard = cardSection(pMod, "♻  Reset progress", 4)
 label(resetCard, "Sets the player back to a brand-new student: Kindergarten, 0 time, starting coins, no items, all event counts 0. This saves immediately.", 12, Enum.Font.Gotham, C.dim)
 local resetB = button(resetCard, "Reset Progress", C.red, UDim2.fromOffset(170, 34))
 
@@ -225,6 +232,38 @@ local STAT_ICONS = { EventsCommon = "🎪", EventsRare = "💎", QuizzesPassed =
 local statCard = cardSection(pStats, "🏆  Events & activity counts", 1)
 label(statCard, "Type any number. 'Events joined' on the Profile becomes the total of the five event types.", 12, Enum.Font.Gotham, C.dim)
 local statBoxes = {}
+
+-- POWERS (instant, players in this server only)
+local powCard = cardSection(pPowers, "⚡  Admin powers", 1)
+label(powCard, "These switch on/off instantly (no Save needed) for the selected player — they must be in this server. They stay on through respawns until you turn them off.", 12, Enum.Font.Gotham, C.dim)
+local meB = button(powCard, "Select myself", C.blue, UDim2.fromOffset(140, 30), { TextSize = 13 })
+local powerUI = {}
+local function powerRow(key, title, desc, withNumber, default, order)
+	local card = cardSection(pPowers, title, order)
+	label(card, desc, 12, Enum.Font.Gotham, C.dim)
+	local r = row(card, 34)
+	local box
+	if withNumber then
+		box = textbox(r, tostring(default), UDim2.fromOffset(110, 34), true) box.Text = tostring(default)
+		label(r, "speed", 13, Enum.Font.Gotham, C.dim, { Size = UDim2.fromOffset(50, 34), TextWrapped = false })
+	end
+	local onB = button(r, "Turn ON", C.green2, UDim2.fromOffset(110, 32), { TextSize = 13 })
+	local offB = button(r, "Turn OFF", C.red, UDim2.fromOffset(110, 32), { TextSize = 13 })
+	local status = label(r, "", 13, Enum.Font.GothamBold, C.dim, { Size = UDim2.fromOffset(170, 34), TextWrapped = false })
+	powerUI[key] = { box = box, status = status }
+	local function send(on)
+		if not target then notify("Select a player first", false) return end
+		local r2 = call("power", { userId = target.userId, power = key, on = on, value = box and tonumber(box.Text) or nil })
+		notify(r2.msg, r2.ok)
+		if r2.ok then task.wait(0.2) local l = call("lookup", { query = tostring(target.userId) }) if l.ok then target = l refreshPages() end end
+	end
+	onB.MouseButton1Click:Connect(function() send(true) end)
+	offB.MouseButton1Click:Connect(function() send(false) end)
+end
+powerRow("invisible", "👻  Invisible", "Hides the player's whole avatar and name from everyone. They see a faint outline of themselves.", false, nil, 2)
+powerRow("god", "🛡  God mode", "The player can't take damage or die.", false, nil, 3)
+powerRow("fly", "🕊  Fly", "Fly with WASD / thumbstick. Space or E = up, Ctrl or Q = down. Look up/down to climb or dive.", true, 50, 4)
+powerRow("speed", "💨  Speed", "Sets walk speed (normal is 16). Turn OFF to go back to normal.", true, 32, 5)
 
 -- ADMINS
 local adminCard = cardSection(pAdmins, "👥  Co-admins", 1)
@@ -328,6 +367,16 @@ function refreshPages()
 		e.note.Text = staged and ("was " .. (target.stats[s] or 0) .. " (unsaved)") or ""
 		e.note.TextColor3 = C.gold
 	end
+	-- powers
+	local pw = target.powers
+	local function st(key, on, extra)
+		local e = powerUI[key] if not e then return end
+		if not pw then e.status.Text = "not in this server" e.status.TextColor3 = C.dim return end
+		e.status.Text = on and ("● ON" .. (extra or "")) or "○ OFF" e.status.TextColor3 = on and Color3.fromRGB(140, 240, 170) or C.dim
+	end
+	st("invisible", pw and pw.invisible) st("god", pw and pw.god)
+	st("fly", pw and pw.fly, pw and pw.fly and ("  (" .. tostring(pw.flySpeed) .. ")") or "")
+	st("speed", pw and pw.speed ~= nil, pw and pw.speed and ("  (" .. tostring(pw.speed) .. ")") or "")
 	-- admins
 	local owner = META.role == "Owner"
 	adminInfo.Text = owner and ("Selected: " .. target.name .. " — role " .. target.role .. ". Co-admins can use this panel but can't manage other admins.")
@@ -357,6 +406,23 @@ local function loadAdmins()
 		end
 	end
 end
+
+local function loadBans()
+	for _, c in ipairs(banListHolder:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+	local res = call("listBans", {})
+	if not res.ok then local r = row(banListHolder, 26) label(r, res.msg or "Couldn't load bans", 12, Enum.Font.Gotham, Color3.fromRGB(255, 150, 150), { Size = UDim2.fromOffset(520, 26) }) return end
+	if #res.bans == 0 then local r = row(banListHolder, 26) label(r, "Nobody is banned.", 13, Enum.Font.Gotham, C.dim, { Size = UDim2.fromOffset(300, 26) }) return end
+	for i, b in ipairs(res.bans) do
+		local r = row(banListHolder, 34, i)
+		label(r, "⛔  " .. tostring(b.name) .. "  •  " .. b.left .. " left  •  " .. tostring(b.reason), 13, Enum.Font.GothamBold, C.text, { Size = UDim2.fromOffset(440, 34), TextWrapped = false, TextTruncate = Enum.TextTruncate.AtEnd })
+		local ub = button(r, "Unban", C.green2, UDim2.fromOffset(90, 30), { TextSize = 13 })
+		ub.MouseButton1Click:Connect(function()
+			local out = call("unban", { userId = b.userId }) notify(out.msg, out.ok) loadBans()
+			if target and target.userId == b.userId then target.ban = nil refreshPages() end
+		end)
+	end
+end
+banListRefresh.MouseButton1Click:Connect(loadBans)
 
 local function select(query)
 	if not query or query == "" then return end
@@ -393,12 +459,13 @@ end)
 banB.MouseButton1Click:Connect(function()
 	if not target then return end
 	local r = call("ban", { userId = target.userId, amount = tonumber(banAmount.Text), unit = banUnit, reason = banReason.Text })
-	notify(r.msg, r.ok) if r.ok then reselect() end
+	notify(r.msg, r.ok) if r.ok then reselect() loadBans() end
 end)
 unbanB.MouseButton1Click:Connect(function()
 	if not target then return end
-	local r = call("unban", { userId = target.userId }) notify(r.msg, r.ok) if r.ok then reselect() end
+	local r = call("unban", { userId = target.userId }) notify(r.msg, r.ok) if r.ok then reselect() loadBans() end
 end)
+meB.MouseButton1Click:Connect(function() select(tostring(player.UserId)) end)
 local resetArmed = false
 resetB.MouseButton1Click:Connect(function()
 	if not target then return end
@@ -453,6 +520,7 @@ local function open()
 		local r = call("players", {}) if r.ok then renderPlayers(r.players) end
 	end
 	loadAdmins()
+	task.spawn(loadBans)
 	dim.Visible = true panel.Visible = true
 end
 local function close() panel.Visible = false dim.Visible = false end

@@ -127,7 +127,7 @@ local function refreshEquipment(player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
-		humanoid.WalkSpeed = BASE_WALKSPEED + speed
+		humanoid.WalkSpeed = player:GetAttribute("AdminSpeed") or (BASE_WALKSPEED + speed)
 		humanoid.JumpPower = BASE_JUMPPOWER + jump
 	end
 
@@ -175,7 +175,7 @@ local function applyConsumable(player, item)
 		task.delay(30, function()
 			local char = player.Character
 			local hum = char and char:FindFirstChildOfClass("Humanoid")
-			if hum then hum.WalkSpeed = BASE_WALKSPEED + (player:GetAttribute("EquipSpeed") or 0) end
+			if hum then hum.WalkSpeed = player:GetAttribute("AdminSpeed") or (BASE_WALKSPEED + (player:GetAttribute("EquipSpeed") or 0)) end
 		end)
 	elseif item.Id == "GlowStick" and character then
 		local hrp = character:FindFirstChild("HumanoidRootPart")

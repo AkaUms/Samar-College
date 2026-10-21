@@ -2,6 +2,8 @@
 
 ## 2026-10-21 (evening)
 - Admin panel (`AdminServer` + `AdminPanelGui/AdminClient`): player search, kick, timed ban / unban, reset progress, grade promote / demote, coins, items, consumables, event counts, co-admin management, Save button.
+- Admin powers: invisible, god mode, fly (custom speed), walk speed — instant on/off, kept through respawns (`AdminPowersClient`).
+- Banned players list with Unban buttons.
 - Level progression now uses a separate per-level quiz timer (`LevelTimeSeconds`); total play time is unchanged.
 - PlayerData saves the level timer and new event counters (Common, Rare, Parkour, Escape, Photobooth).
 

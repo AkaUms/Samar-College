@@ -331,7 +331,10 @@ handlers.lookup = function(caller, args)
 		ban = b and { left = fmtDuration(b.untilTime - os.time()), reason = b.reason, by = b.by } or nil,
 		level = tonumber(data.LevelUnlocked) or 1, time = tonumber(data.Time) or 0, levelTime = tonumber(data.LevelTime) or 0,
 		coins = { Common = tonumber(data.Coins.Common) or 0, Event = tonumber(data.Coins.Event) or 0 },
-		owned = ownedSet, inventory = data.Inventory or {}, stats = stats }
+		owned = ownedSet, inventory = data.Inventory or {}, stats = stats,
+		powers = p and { invisible = p:GetAttribute("AdminInvisible") == true, god = p:GetAttribute("AdminGod") == true,
+			fly = p:GetAttribute("AdminFly") == true, flySpeed = p:GetAttribute("AdminFlySpeed") or 50,
+			speed = p:GetAttribute("AdminSpeed") } or nil }
 end
 
 handlers.save = function(caller, args)
@@ -372,7 +375,8 @@ handlers.ban = function(caller, args)
 	local seconds = math.floor(math.min(amount * unitSec, 3650 * 86400))
 	if not banStore then return { ok = false, msg = "Ban DataStore unavailable (enable API access)" } end
 	local reason = type(args.reason) == "string" and args.reason:sub(1, 200) or ""
-	local b = { untilTime = os.time() + seconds, reason = reason ~= "" and reason or "Banned by an admin", by = caller.Name, at = os.time() }
+	local okN, tName = pcall(function() return Players:GetNameFromUserIdAsync(userId) end)
+	local b = { untilTime = os.time() + seconds, reason = reason ~= "" and reason or "Banned by an admin", by = caller.Name, at = os.time(), name = okN and tName or tostring(userId) }
 	local ok, err = pcall(function() banStore:SetAsync("b_" .. userId, b) end)
 	if not ok then return { ok = false, msg = "Could not save ban: " .. tostring(err) } end
 	local msg = banMessage(b)
@@ -415,6 +419,131 @@ handlers.listAdmins = function(caller)
 	local list = {}
 	for id, v in pairs(coAdmins) do table.insert(list, { userId = id, name = v.name, by = v.by }) end
 	return { ok = true, admins = list, canManage = isOwner(caller.UserId) }
+end
+
+---------------------------------------------------------------- admin powers (players in this server)
+local NORMAL_SPEED = 16
+local invisSaved = {} -- [character] = { [instance] = { prop, value } }
+
+local function setInvisible(p, on)
+	local char = p.Character
+	if not char then return end
+	if on then
+		if invisSaved[char] then return end
+		local saved = {}
+		for _, d in ipairs(char:GetDescendants()) do
+			if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then saved[d] = { "Transparency", d.Transparency } d.Transparency = 1
+			elseif d:IsA("Decal") or d:IsA("Texture") then saved[d] = { "Transparency", d.Transparency } d.Transparency = 1
+			elseif d:IsA("BillboardGui") or d:IsA("SurfaceGui") then saved[d] = { "Enabled", d.Enabled } d.Enabled = false
+			elseif d:IsA("ParticleEmitter") or d:IsA("Trail") or d:IsA("Beam") or d:IsA("PointLight") then saved[d] = { "Enabled", d.Enabled } d.Enabled = false end
+		end
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then saved[hum] = { "DisplayDistanceType", hum.DisplayDistanceType } hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None end
+		invisSaved[char] = saved
+		-- things added later (tools, hats) also hidden
+		saved.__conn = char.DescendantAdded:Connect(function(d)
+			task.defer(function()
+				if not invisSaved[char] then return end
+				if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then invisSaved[char][d] = { "Transparency", d.Transparency } d.Transparency = 1
+				elseif d:IsA("Decal") then invisSaved[char][d] = { "Transparency", d.Transparency } d.Transparency = 1 end
+			end)
+		end)
+	else
+		local saved = invisSaved[char]
+		if not saved then return end
+		if saved.__conn then saved.__conn:Disconnect() saved.__conn = nil end
+		for inst, v in pairs(saved) do if typeof(inst) == "Instance" and inst.Parent then inst[v[1]] = v[2] end end
+		invisSaved[char] = nil
+	end
+end
+
+local godConns = {}
+local function setGod(p, on)
+	local char = p.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if godConns[p] then godConns[p]:Disconnect() godConns[p] = nil end
+	if not hum then return end
+	if on then
+		hum.MaxHealth = math.huge hum.Health = math.huge
+		godConns[p] = hum.HealthChanged:Connect(function(h) if h < math.huge then hum.Health = math.huge end end)
+	else
+		hum.MaxHealth = 100 hum.Health = 100
+	end
+end
+
+local function applySpeed(p)
+	refreshGear:Fire(p) -- ShopServer uses AdminSpeed (if set) when it sets WalkSpeed
+	local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+	local sp = p:GetAttribute("AdminSpeed")
+	if hum and sp then hum.WalkSpeed = sp end
+end
+
+local function reapplyPowers(p)
+	if p:GetAttribute("AdminInvisible") then setInvisible(p, true) end
+	if p:GetAttribute("AdminGod") then setGod(p, true) end
+	if p:GetAttribute("AdminSpeed") then applySpeed(p) end
+end
+local function hookPlayer(p)
+	p.CharacterAdded:Connect(function(char)
+		char:WaitForChild("Humanoid", 10)
+		task.wait(1.5) -- after avatar sizing / cosmetics
+		reapplyPowers(p)
+	end)
+end
+Players.PlayerAdded:Connect(hookPlayer)
+for _, p in ipairs(Players:GetPlayers()) do hookPlayer(p) end
+Players.PlayerRemoving:Connect(function(p) if godConns[p] then godConns[p]:Disconnect() godConns[p] = nil end end)
+
+handlers.power = function(caller, args)
+	local userId = tonumber(args.userId) if not userId then return { ok = false, msg = "No player selected" } end
+	local deny = protectTarget(caller, userId) if deny then return { ok = false, msg = deny } end
+	local p = findPlayer(userId)
+	if not p then return { ok = false, msg = "Powers only work on players in THIS server" } end
+	local on = args.on == true
+	local kind = args.power
+	if kind == "invisible" then
+		p:SetAttribute("AdminInvisible", on or nil) setInvisible(p, on)
+		return { ok = true, msg = "Invisible " .. (on and "ON" or "OFF") .. " for " .. p.Name }
+	elseif kind == "god" then
+		p:SetAttribute("AdminGod", on or nil) setGod(p, on)
+		return { ok = true, msg = "God mode " .. (on and "ON" or "OFF") .. " for " .. p.Name }
+	elseif kind == "fly" then
+		local sp = math.clamp(tonumber(args.value) or p:GetAttribute("AdminFlySpeed") or 50, 1, 500)
+		p:SetAttribute("AdminFlySpeed", sp)
+		p:SetAttribute("AdminFly", on or nil)
+		return { ok = true, msg = "Fly " .. (on and ("ON at speed " .. sp) or "OFF") .. " for " .. p.Name }
+	elseif kind == "speed" then
+		if on then
+			local sp = math.clamp(tonumber(args.value) or 32, 1, 500)
+			p:SetAttribute("AdminSpeed", sp)
+		else
+			p:SetAttribute("AdminSpeed", nil)
+		end
+		applySpeed(p)
+		return { ok = true, msg = on and ("Speed set to " .. p:GetAttribute("AdminSpeed") .. " for " .. p.Name) or ("Speed back to normal for " .. p.Name) }
+	end
+	return { ok = false, msg = "Unknown power" }
+end
+
+handlers.listBans = function()
+	if not banStore then return { ok = false, msg = "Ban DataStore unavailable (enable API access)" } end
+	local out = {}
+	local ok, err = pcall(function()
+		local pages = banStore:ListKeysAsync("b_", 50)
+		local keys = pages:GetCurrentPage()
+		for _, k in ipairs(keys) do
+			local id = tonumber((k.KeyName:gsub("^b_", "")))
+			local b = id and getBan(id)
+			if b then
+				local name = b.name
+				if not name then local okN, n = pcall(function() return Players:GetNameFromUserIdAsync(id) end) name = okN and n or tostring(id) end
+				table.insert(out, { userId = id, name = name, left = fmtDuration(b.untilTime - os.time()), reason = b.reason, by = b.by })
+			end
+			if #out >= 50 then break end
+		end
+	end)
+	if not ok then return { ok = false, msg = tostring(err) } end
+	return { ok = true, bans = out }
 end
 
 fn.OnServerInvoke = function(caller, action, args)
