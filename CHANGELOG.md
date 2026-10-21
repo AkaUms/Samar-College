@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-10-21 (night)
+- Rooms 202, 204, 302, 303, 304, 305 changed to Senior High School classrooms: Grade 11 STEM A, HUMSS A, GAS A and Grade 12 TVL-ICT A, ABM A, STEM B — SHS subjects on the board, TV and schedules, door signs, "ADVISER" nameplate, SHS banner. Originals backed up in ServerStorage.Backup_Classrooms_PreSHS.
 - Cashier's Shop window now scales to fit phones and tablets (it was 600x470 and overflowed small screens) and draws above the HUD. Old InventoryGui (disabled, replaced by the Bag) also scales and no longer reacts to [I].
 - Phone / tablet layout pass (checked with Studio's device emulator, iPhone XR): side buttons sit near the top on phones so the thumbstick never covers Admin; coin bar shrinks on small screens; Bag / Map / Settings now draw above the coin bar (MainHUD DisplayOrder 10); hotbar uses the touch layout in the emulator too. All panels fit every device in Studio's device list (iPhone 7 up to iPad Pro 13 and Android TV).
 - Profile and Admin panels: the dark background now covers the whole screen (top bar, notch and screen edges), and both panels scale to fit any phone, tablet or PC screen. Profile close button shows "X".
