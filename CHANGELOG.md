@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-10-22
+- Sit function on every new chair (NB Room 1, SSLG Office, Records Office, Faculty Room): real Seats tagged `PromptSeat`, press E "Sit", seat faces the right way. `PromptSeats` now shows a friendly name from the `SeatName` attribute (Plastic Chair, Office Chair, Teacher's Chair).
+- Explorer cleanup: rooms grouped and named by what they are.
+  - 2F/02_Rooms: `NB_Room_1` (Structure + Details), `NB_Room_2`, `NB_Room_3`, `SSLG_Office`, `SHS_Records_Office`, `SHS_Faculty_Room` (Inside, Outside, Door, Windows), `Library`, `PhotoID_Studio`, `ComputerLab_1`, `ComputerLab_2`, `ScienceLab_2F`, `Room202_SHS_G11_STEM_A`, `Room204_SHS_G11_HUMSS_A`.
+  - 3F/02_Rooms: `ScienceLab_3F`, `Room302_SHS_G12_TVL_ICT_A`, `Room303_SHS_G12_ABM_A`, `Room304_SHS_G11_GAS_A`, `Room305_SHS_G12_STEM_B`.
+  - 2F/07_Common_Areas: `StairHall_SSLG`, `Corridor_CeilingLights`; 3F/07_Common_Areas: `Terrace_Canteen`, `StairLanding_Storage`.
 - NB Room 1 (`NBRoom1_2F`), rebuilt from real photos: old armchairs and whiteboards replaced (backup in ServerStorage.Backup_NBRoom1) with 12 white glass-top tables and 48 white chairs facing a wall-mounted smart TV, Vision/Mission and Goals/Objectives boards, ceiling beams, 8 tube lights, 4 ceiling-hung fans, smoke detector, CCTV, fire extinguisher, clock, cream walls and glossy tiles. Outside: cream wall, black window trim, green "NB ROOM 1" projecting signs at both doors, fire alarm bell and pull station, black doors with a horizontal glass panel.
 - 2nd-floor corridor: 18 tube lights along the ceiling (`Corridor_2F_CeilingLights`), one every 12 studs.
 

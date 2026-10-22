@@ -8,7 +8,7 @@ local function setup(seat)
 	local prompt = seat:FindFirstChild("SitPrompt") or Instance.new("ProximityPrompt")
 	prompt.Name = "SitPrompt"
 	prompt.ActionText = "Sit"
-	prompt.ObjectText = seat.Parent and seat.Parent.Name or "Seat"
+	prompt.ObjectText = seat:GetAttribute("SeatName") or (seat.Parent and seat.Parent.Name) or "Seat"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 7
