@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-10-22
+- 2nd-floor corridor: 18 tube lights along the ceiling (`Corridor_2F_CeilingLights`), one every 12 studs.
+
 ## 2026-10-21 (night)
 - SHS Faculty Room (`FacultyRoom_SHS_2F`), from real photos. Outside: cream wall, black window frames, green curtains behind the glass, projecting "SENIOR HIGH SCHOOL FACULTY ROOM" sign, "Faculty only" plate, black grooved door with round knob. Inside: 6 teacher workstations with computers, name plates and chairs, SHS Faculty Bulletin (meeting, deadlines, advisers), learning-module shelf, steel cabinet, meeting table with monobloc chairs, stacked chairs, water dispenser, mini fridge with kettle, split aircon, clock, lights.
 - Records Office and Faculty Room doors now show their black colour (union used its own wood colour before).
