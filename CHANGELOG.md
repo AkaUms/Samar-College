@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-10-22
+- NB Room 1 & 2 windows redesigned: black aluminium sliding windows (3 units × 2 sashes, latches, sills) on the corridor and back walls (`Details/Window_Corridor`, `Details/Window_Back`); old window models in the room backups. NB Room 2 curtains made solid so they show through the glass.
 - NB Room 2 (`2F/02_Rooms/NB_Room_2`: Structure + Details), same setup as NB Room 1 (glass-top tables, 48 sit chairs, lights, fans, boards, signs "NB ROOM 2", door glass) plus green sheer curtains and a **sliding whiteboard over the TV**: press E at the green button to slide the two whiteboard panels open (TV shows) or closed (TV covered). Old armchairs/whiteboards in ServerStorage.Backup_NBRoom2.
 - Student Waiting Area nook between the Records Office and Faculty Room (`2F/07_Common_Areas/Student_Nook`): black aluminium sliding window in the wall opening, green cushioned benches with 6 sit spots (E to sit), tube light, cream walls, tiled floor and step, "STUDENT WAITING AREA" sign, Core Values and Reminders posters, potted plants and a trash bin.
 - Sit function on every new chair (NB Room 1, SSLG Office, Records Office, Faculty Room): real Seats tagged `PromptSeat`, press E "Sit", seat faces the right way. `PromptSeats` now shows a friendly name from the `SeatName` attribute (Plastic Chair, Office Chair, Teacher's Chair).
