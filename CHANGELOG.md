@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-10-22
+- NB Room 1 (`NBRoom1_2F`), rebuilt from real photos: old armchairs and whiteboards replaced (backup in ServerStorage.Backup_NBRoom1) with 12 white glass-top tables and 48 white chairs facing a wall-mounted smart TV, Vision/Mission and Goals/Objectives boards, ceiling beams, 8 tube lights, 4 ceiling-hung fans, smoke detector, CCTV, fire extinguisher, clock, cream walls and glossy tiles. Outside: cream wall, black window trim, green "NB ROOM 1" projecting signs at both doors, fire alarm bell and pull station, black doors with a horizontal glass panel.
 - 2nd-floor corridor: 18 tube lights along the ceiling (`Corridor_2F_CeilingLights`), one every 12 studs.
 
 ## 2026-10-21 (night)
