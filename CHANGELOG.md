@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-24
+- Canteen (1F) rebuilt from real photos, grouped as `1F_Ground/02_Rooms/Canteen` (Details, Kitchen_Counter, Vending, Doors, Windows):
+  - Dining: 9 white square tables with 36 mint-green monobloc chairs and 8 red fiberglass table-and-bench sets — 68 sit spots (E to sit). Old dark wooden table sets in ServerStorage.Backup_Canteen.
+  - White walls (only the exposed wall faces), white coffered ceiling with beams and dark recessed slots, 22 ceiling bulbs, 5 ceiling-mounted oscillating fans and 4 wall fans.
+  - Red "Ice Cold Drinks" fridge, two rows of blue water gallons, old CRT TV on an angle-iron bracket, yellow "Strictly no standby allowed" / "Notice" signs, wall clock, CCTV domes, BIO / NON-BIO / RECYCLE bins.
+  - Counter: cream front with wood top, hanging menu board with prices, glass candy display, heated pastry display, water dispenser.
+- Map teleport "Canteen (Cashier)" now drops you on the open floor inside the east door, facing the cashier (old spot put you inside the chairs). Places in `HUDConfig` can set an optional `LookAt`; `HUDServer` turns the player to face it.
+
 ## 2026-10-22
 - Sliding windows and curtains you can use: every NB Room 1 & 2 window unit has an E prompt ("Open window"/"Close window") that slides one sash over the other; NB Room 2 curtains open to the sides and close with "Open curtains"/"Close curtains". Handled by `SlidingWindowsCurtains` (tags `SlidingWindow`, `SlidingCurtain`). An invisible safety screen stops players falling out of open windows.
 - NB Room 1 & 2 windows redesigned: black aluminium sliding windows (3 units × 2 sashes, latches, sills) on the corridor and back walls (`Details/Window_Corridor`, `Details/Window_Back`); old window models in the room backups. NB Room 2 curtains made solid so they show through the glass.

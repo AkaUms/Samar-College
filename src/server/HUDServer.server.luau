@@ -35,7 +35,12 @@ mapTeleport.OnServerEvent:Connect(function(player, placeId)
 
 	lastTeleport[player] = now
 	humanoid.Sit = false
-	character:PivotTo(CFrame.new(place.Position + Vector3.new(0, 0.5, 0)))
+	local pos = place.Position + Vector3.new(0, 0.5, 0)
+	if place.LookAt then
+		character:PivotTo(CFrame.lookAt(pos, Vector3.new(place.LookAt.X, pos.Y, place.LookAt.Z)))
+	else
+		character:PivotTo(CFrame.new(pos))
+	end
 	mapTeleport:FireClient(player, "Teleported to " .. place.Name)
 end)
 
