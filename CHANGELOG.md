@@ -1,6 +1,13 @@
 # Changelog
 
 ## 2026-10-24
+- Canteen walkway, stair passage and east canopy (1F) detailed from real photos, grouped as `1F_Ground/07_Common_Areas/CanteenWalkway_Stairs` (SouthWalkway_Canopy, CanteenWalkway, StairPassage, EastCanopy_Walk, Lighting, LightSwitches, Signs):
+  - New steel canopy over the south walkway: galvanized corrugated roof with foil underside, rafters, purlins and trusses, green steel posts with braces, green fascia, white gutter and downspouts. The east canopy got the same look (painted steel frame, green posts, gutter, downspouts).
+  - **Sit benches**: 12 white slat benches with backrests (24 sit spots, E "Sit") — in front of the canteen windows, along the low wall, in the stair passage and under the east canopy. Old dark benches in ServerStorage.Backup_CanteenWalkway.
+  - **Lights with switches**: 17 recessed downlights + stair wall light + storage bulb on the "WALKWAY LIGHTS" switch (passage entrance), 10 hanging tube lights on the "CANOPY LIGHTS" switch (pillar by the stairs). E = on/off, R = brightness Low / Medium / High.
+  - **Metal grille gate**: the space under the stairs is closed off with a black steel grille; its double gate swings open / closed with E at the lock box. New `SwingGates` script (tag `SwingGate`, leaves turn on their `Hinge` by `OpenAngle`). Inside: sawhorse table with toolbox, old wooden chair, leaning planks and plywood, blue drum, bucket and broom.
+  - Stairs: white handrail and balusters on the open side and landing, wall handrail, solid cream stringer and soffit, anti-slip nosing strips; invisible rail colliders so nobody falls off.
+  - Tall "This way" room directory sign (Rooms 208 Poseidon, 209 Star Class, 210 Ares / 203 Hades, 204 Zeus), WARNING video surveillance signs, CCTV domes, green electrical panel with blue conduit, brown wooden cabinet, brown tiled passage floor, potted plants, floor hatch covers, hand truck and an announcements board.
 - COED classrooms FH 3 and FH 4 (1F, old `Classroom_1F_005` / `_006`), detailed inside and outside from a real photo. Grouped as `1F_Ground/02_Rooms/FH3_COED_Room` and `FH4_COED_Room` (Structure, Inside, Outside); originals in ServerStorage.Backup_COED_Rooms.
   - Inside: 30 armchair desks in 5 neat rows with a centre aisle, all with E "Sit" (plus the teacher's chair). Teacher's desk with laptop, books, class record and INSTRUCTOR nameplate; podium moved to the front-right so it no longer blocks the board.
   - **Sliding whiteboard with a TV behind it**: press E at the green SLIDE button — the two middle panels slide apart to show the TV (lesson slide "Principles of Teaching"), press again to cover it. Runs on the new `SlidingWhiteboards` script (tag `SlidingWhiteboard`, panels move by their `OpenOffset`).
