@@ -1,6 +1,12 @@
 # Changelog
 
 ## 2026-10-24
+- COED classrooms FH 3 and FH 4 (1F, old `Classroom_1F_005` / `_006`), detailed inside and outside from a real photo. Grouped as `1F_Ground/02_Rooms/FH3_COED_Room` and `FH4_COED_Room` (Structure, Inside, Outside); originals in ServerStorage.Backup_COED_Rooms.
+  - Inside: 30 armchair desks in 5 neat rows with a centre aisle, all with E "Sit" (plus the teacher's chair). Teacher's desk with laptop, books, class record and INSTRUCTOR nameplate; podium moved to the front-right so it no longer blocks the board.
+  - **Sliding whiteboard with a TV behind it**: press E at the green SLIDE button — the two middle panels slide apart to show the TV (lesson slide "Principles of Teaching"), press again to cover it. Runs on the new `SlidingWhiteboards` script (tag `SlidingWhiteboard`, panels move by their `OpenOffset`).
+  - 6 double-tube ceiling lights with a **light switch** inside by the door: E = on/off, R = brightness Low / Medium / High.
+  - COED design: blue wainscot with white chair rail, tiled floor, drop ceiling, "College of Education" banner, Philippine flag, class schedule, classroom rules, clock, PPST 7 Domains / Bloom's Taxonomy / Code of Ethics posters, Future Educators' Corner board, Instructional Materials corner (books, globe, flash cards, abacus), flip-chart easel, split aircon, steel cabinet, BIO / NON-BIO bins, fire extinguisher, CCTV and smoke detector.
+  - Outside: green projecting "FH 3" / "FH 4" signs and wall plaques, braced wooden doors (brown FH 3, dark FH 4), white steel window grilles, blue doormats, cable bundle along the wall top, ceiling bulbs, wall lamp, hanging "Please keep to the right" sign, orange PVC pipe under the awning, "No Spitting" sign on the corner pillar, emergency evacuation plan, CCTV, mop and bucket.
 - Canteen light switch by the east door: E = turn lights on/off (bulbs go dark, green/red indicator), R = brightness Low / Medium / High. Bulbs softened (base brightness 0.55). Runs on the new `LightSwitches` script (tag `LightSwitch` + ObjectValue `Lights`), so other rooms can get switches too.
 - Canteen (1F) rebuilt from real photos, grouped as `1F_Ground/02_Rooms/Canteen` (Details, Kitchen_Counter, Vending, Doors, Windows):
   - Dining: 9 white square tables with 36 mint-green monobloc chairs and 8 red fiberglass table-and-bench sets — 68 sit spots (E to sit). Old dark wooden table sets in ServerStorage.Backup_Canteen.
