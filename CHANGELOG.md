@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-10-24
+- **No more using things through walls** (`PromptGuard`, StarterPlayerScripts): every E-prompt in the game (518+ — sit, light switches, doors, gates, windows, curtains, whiteboards, NPCs, ID scanners) is hidden unless you can really reach it. A wall, door, window glass or jalousie, pillar, grille, low wall, floor or ceiling between you and it hides it; furniture does not. You also have to be able to walk to it (no reaching through windows). Windows and curtains only work from inside the room (`UseSide` attribute). Checked with an automated test that stood behind every wall next to every prompt in Play.
+- Shorter ranges: Sit 5 studs (was 7), light switches 5 (was 9), doors 6 (was 10), whiteboards / grille gates / entry-exit gates 6, windows and curtains 5, NPC talk 8, main gate 10.
+- Light switch prompts no longer show at the same time as a door's E prompt (they were "AlwaysShow", so one E press could switch the lights and open the door together). Now only the nearest E prompt shows.
 - Utility passage grille gate now sits at the passage entrance (moved there in Studio): grille filled up to the ceiling, "Storage – Authorized personnel only" plate moved onto the new gate head. E at the lock box opens / closes it (checked with a real prompt press in Play).
 - Utility passage behind FH 4 (1F, `1F_Ground/07_Common_Areas/UtilityPassage_FH4`), rebuilt from a real photo:
   - **Storage grille gate** at the end: black steel grille wall with transom and a double gate that swings out with E at the lock box (padlock, chain, drop bolt; uses `SwingGates`). Inside: steel shelves with boxes, paint cans and tarps, stacked monobloc chairs, aluminium ladder, old table with toolbox and extension reel, mop bucket, bare bulb.

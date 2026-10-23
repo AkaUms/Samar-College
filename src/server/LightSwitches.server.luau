@@ -16,6 +16,13 @@ local function setup(sw)
 	if not link or not link.Value or not power then return end
 	local group = link.Value
 	local indicator = sw:FindFirstChild("Indicator", true)
+	-- short range and one E prompt at a time, so a switch next to a door never fires together with it
+	for _, pr in ipairs({ power, bright }) do
+		if pr then
+			pr.MaxActivationDistance = 5
+			pr.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton
+		end
+	end
 
 	local function apply()
 		local on = sw:GetAttribute("On") ~= false

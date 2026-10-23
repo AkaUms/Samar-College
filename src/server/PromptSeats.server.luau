@@ -11,7 +11,7 @@ local function setup(seat)
 	prompt.ObjectText = seat:GetAttribute("SeatName") or (seat.Parent and seat.Parent.Name) or "Seat"
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
-	prompt.MaxActivationDistance = 7
+	prompt.MaxActivationDistance = 5 -- short range; PromptGuard (client) also hides it behind walls
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = seat
 
