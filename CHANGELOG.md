@@ -1,6 +1,11 @@
 # Changelog
 
 ## 2026-10-24
+- Utility passage behind FH 4 (1F, `1F_Ground/07_Common_Areas/UtilityPassage_FH4`), rebuilt from a real photo:
+  - **Storage grille gate** at the end: black steel grille wall with transom and a double gate that swings out with E at the lock box (padlock, chain, drop bolt; uses `SwingGates`). Inside: steel shelves with boxes, paint cans and tarps, stacked monobloc chairs, aluminium ladder, old table with toolbox and extension reel, mop bucket, bare bulb.
+  - **Lights**: 3 downlights + the storage bulb on a "PASSAGE LIGHTS" switch by the entrance (E on/off, R brightness).
+  - **Sit**: the old wooden chair by the wall has E "Sit".
+  - Photo details: cream walls, dark floor tiles with a white tile path and hatch cover, dropped beams, sawhorse table, leaning planks and boards, blue and white PVC pipes, green electrical panel with conduits and a wire coil, white access board, plywood sheet and plywood hoarding with a corrugated top, galvanized duct and sagging cable bundle along the ceiling, bullet CCTV, WARNING video surveillance and tampering signs, "Storage – Authorized personnel only" plate.
 - Canteen walkway, stair passage and east canopy (1F) detailed from real photos, grouped as `1F_Ground/07_Common_Areas/CanteenWalkway_Stairs` (SouthWalkway_Canopy, CanteenWalkway, StairPassage, EastCanopy_Walk, Lighting, LightSwitches, Signs):
   - New steel canopy over the south walkway: galvanized corrugated roof with foil underside, rafters, purlins and trusses, green steel posts with braces, green fascia, white gutter and downspouts. The east canopy got the same look (painted steel frame, green posts, gutter, downspouts).
   - **Sit benches**: 12 white slat benches with backrests (24 sit spots, E "Sit") — in front of the canteen windows, along the low wall, in the stair passage and under the east canopy. Old dark benches in ServerStorage.Backup_CanteenWalkway.
