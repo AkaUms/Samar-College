@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-10-24
+- Canteen light switch by the east door: E = turn lights on/off (bulbs go dark, green/red indicator), R = brightness Low / Medium / High. Bulbs softened (base brightness 0.55). Runs on the new `LightSwitches` script (tag `LightSwitch` + ObjectValue `Lights`), so other rooms can get switches too.
 - Canteen (1F) rebuilt from real photos, grouped as `1F_Ground/02_Rooms/Canteen` (Details, Kitchen_Counter, Vending, Doors, Windows):
   - Dining: 9 white square tables with 36 mint-green monobloc chairs and 8 red fiberglass table-and-bench sets — 68 sit spots (E to sit). Old dark wooden table sets in ServerStorage.Backup_Canteen.
   - White walls (only the exposed wall faces), white coffered ceiling with beams and dark recessed slots, 22 ceiling bulbs, 5 ceiling-mounted oscillating fans and 4 wall fans.
