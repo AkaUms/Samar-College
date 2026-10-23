@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-10-24
+- Utility passage grille gate now sits at the passage entrance (moved there in Studio): grille filled up to the ceiling, "Storage – Authorized personnel only" plate moved onto the new gate head. E at the lock box opens / closes it (checked with a real prompt press in Play).
 - Utility passage behind FH 4 (1F, `1F_Ground/07_Common_Areas/UtilityPassage_FH4`), rebuilt from a real photo:
   - **Storage grille gate** at the end: black steel grille wall with transom and a double gate that swings out with E at the lock box (padlock, chain, drop bolt; uses `SwingGates`). Inside: steel shelves with boxes, paint cans and tarps, stacked monobloc chairs, aluminium ladder, old table with toolbox and extension reel, mop bucket, bare bulb.
   - **Lights**: 3 downlights + the storage bulb on a "PASSAGE LIGHTS" switch by the entrance (E on/off, R brightness).
