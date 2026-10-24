@@ -25,6 +25,7 @@ shop with campus coins, and meet other students in servers grouped by year level
 - [x] **Security post**: CCTV monitor wall, computer desk, check-in standing desk, staff lockers, first-aid station, visitor chairs, notice board, key cabinet
 - [x] **Garden** behind the front wall with flower beds, shrubs and trees
 - [x] **Driveway** under the building: railings, painted curbs, IN/OUT lane markings, speed humps, zebra crossing, ceiling and wall lights
+- [x] **Medical and Dental Clinic** (1F): clinic sign, posters and grille outside; nurse's desk, waiting bench, examination couch, dental chair, ward beds with curtains, 15 E seats and an on / off light switch inside
 
 ### Gameplay systems
 - [x] **Main gate** — double swing gate, open/close with `E` (both sides) or the control button; auto-closes after 20 s

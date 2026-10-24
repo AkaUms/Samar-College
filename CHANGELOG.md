@@ -2,6 +2,16 @@
 
 Each heading is the date and time of the push, in Philippine Time (PHT, UTC+08:00).
 
+## 2026-10-24 7:48pm
+- **Medical and Dental Clinic (1F)** detailed from real photos, grouped as `1F_Ground/02_Rooms/MedicalDentalClinic` (Structure, Outside, Inside, Lighting). The door, window, 2 beds and 2 IV pumps were moved in and renamed (`ClinicDoor`, `Window_Corridor`, `Bed_1` / `Bed_2`, `IVPump_1` / `IVPump_2`; old names kept in the `OldName` attribute).
+  - **Room**: cream plaster walls with a mint wainscot, dark green skirting and white chair rail (added on the inside only, so the corridor and the next room keep their look), white tile floor with a green border, door mat, white ceiling with a panel grid and cove trim.
+  - **Outside**: green double-sided "Medical and Dental Clinic" blade sign with the clinic seal, white grille over the window with posters (Medical Services and clinic hours, Dental Clinic schedule, Leptospirosis, Tuberculosis, Dengue), door with a vision glass, "We're Open" card, clinic hours card, "Clinic" plate, kick plate and open padlock (all move with the door), 3-gang switch plate with blue conduit, memorandum, "Health Corner" display cabinet, 2 corridor tube lights.
+  - **Inside**: nurse's desk (monitor, BP monitor, stethoscope, logbook, name plate) with a swivel chair and 2 patient chairs, logbook table by the door ("Please log in"), 4-seat waiting bench, wall clock, fire extinguisher, first-aid box (green cross), sink counter with mirror, soap and paper towels, yellow / black waste bins, handwashing poster, medicine cabinet, examination couch with a step stool and curtain, beam scale, wheelchair, oxygen tank, aircon, clinic reminders, window curtains.
+  - **Dental area**: dental chair with a ceiling lamp, cuspidor and instrument tray, dentist stool, long dental cabinet (autoclave, gloves, face masks, UV sterilizer), x-ray viewer, "Brush twice a day" poster, folding privacy screen.
+  - **Ward**: privacy curtains on ceiling tracks, bed-head panels (O₂ / vacuum / air outlets, sockets, call button, lamp, bed number), bedside table, 2 visitor chairs.
+  - **Sit** (E): 15 seats — nurse's chair, 2 patient chairs, 4 waiting seats, examination couch, wheelchair, dental chair, dentist stool, 2 beds, 2 visitor chairs. The beds' old touch seats were removed, so nobody sits by walking into a bed.
+  - **Lights**: 6 tube lights, the dental lamp and the x-ray viewer on a "CLINIC LIGHTS" switch by the door — E on / off only (no brightness button), always at Medium.
+
 ## 2026-10-24 3:45pm
 - Changelog: every push now has its own heading with the date and time it was pushed (Philippine Time).
 
