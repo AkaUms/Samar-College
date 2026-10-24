@@ -2,6 +2,17 @@
 
 Each heading is the date and time of the push, in Philippine Time (PHT, UTC+08:00).
 
+## 2026-10-24 8:30pm
+- **Office of the Senior Vice President for Administration (1F)**, next to the clinic, built from a real photo and grouped as `1F_Ground/02_Rooms/SVP_AdminOffice` (Structure, Outside, Inside, Lighting). Its door, front walls, door header and floor were moved in and renamed (`OfficeDoor`, `FrontWall_NorthOfDoor` / `_SouthOfDoor` / `_OverDoor`, `Slab`; old names in the `OldName` attribute).
+  - **Outside**: green blade sign "Office of the Senior Vice President for Administration" with the school seal, door with natural wood planks, a glass strip, office-hours notice, deadbolt and brass bolt (they move with the door), dark wood door frame, three carved wooden notice boards behind glass (Administration board with a "RELEASED" memorandum, office hours, reminders and a calendar; Announcements board with "Know your Electives" posters; Office Directory), white slatted bench (3 seats), Wi-Fi access point, black and blue cable bundle, 2 bare bulbs, a "Please keep to the right" hanging sign.
+  - The wooden glass case between the clinic and this office is now the carved **Administration** notice board (the photo shows it is a notice board), replacing the clinic's "Health Corner" cabinet.
+  - **Inside**: cream walls with wood wainscot panelling, beige tiles, white ceiling grid. Front office: administrative assistant's desk facing the door (computer, phone, trays, visitor's logbook, name plate), return desk with a printer, 2 staff workstations with a divider, waiting sofa with a coffee table and plant, 3 steel filing cabinets, water dispenser, photocopier, Vision / Mission frames, "Our Services" board.
+  - **SVP's own room** behind a wood-and-glass partition with its own door: executive desk (computer, desk lamp, phone, name plate, pen set, stamp pad, mini flag), leather executive chair, 2 visitor chairs, credenza with books, a trophy, a plaque and a photo, framed certificates, bookshelf, 3-seat sofa and 2 armchairs on a rug with a glass coffee table, Philippine flag and school flag, plants, wall TV.
+  - **Sit** (E): 17 seats — bench outside, assistant's chair, visitor chair, 2 staff chairs, 2-seat waiting sofa, SVP's chair, 2 visitor chairs, 3-seat sofa, 2 armchairs.
+  - **Lights**: "OFFICE LIGHTS" (by the door) and "SVP OFFICE LIGHTS" (by the inner door), 3 tube lights each, E on / off only, always at Medium.
+- **New: on / off devices** (`PowerToggles` server script, tag `PowerToggle`): 2 aircons (E on the wall controller: louver opens, cold-air mist, display and LED), 4 computers, the desk lamp and the TV (F, so they never clash with E "Sit").
+- **New: live wall clocks** (`LiveClocks` client script, tag `LiveClock`): clocks show the real Philippine time with a moving second hand. The clinic clock now uses it too.
+
 ## 2026-10-24 7:48pm
 - **Medical and Dental Clinic (1F)** detailed from real photos, grouped as `1F_Ground/02_Rooms/MedicalDentalClinic` (Structure, Outside, Inside, Lighting). The door, window, 2 beds and 2 IV pumps were moved in and renamed (`ClinicDoor`, `Window_Corridor`, `Bed_1` / `Bed_2`, `IVPump_1` / `IVPump_2`; old names kept in the `OldName` attribute).
   - **Room**: cream plaster walls with a mint wainscot, dark green skirting and white chair rail (added on the inside only, so the corridor and the next room keep their look), white tile floor with a green border, door mat, white ceiling with a panel grid and cove trim.
