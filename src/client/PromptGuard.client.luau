@@ -2,7 +2,8 @@
 -- when you can really reach them.
 --   * A wall, door, window, pillar, floor or ceiling between you and the prompt hides it, so you
 --     cannot sit, switch lights or open things on the other side of a wall.
---     Furniture (tables, chairs, desks, benches, small props) does not block.
+--     Furniture (tables, chairs, desks, benches, small props) does not block, nor does any part with
+--     the attribute Furniture = true (big built-in benches / ledges).
 --   * You must also be able to walk to it: you cannot reach through a window, grille or low wall.
 --   * A prompt with a Vector3 attribute "UseSide" only works from that side
 --     (windows and curtains: from inside the room only).
@@ -33,7 +34,7 @@ local function isBlocker(p)
 	local cached = blockerCache[p]
 	if cached ~= nil then return cached end
 	local result = false
-	if p:IsA("BasePart") then
+	if p:IsA("BasePart") and not p:GetAttribute("Furniture") then -- "Furniture" parts (e.g. built-in benches) never block
 		local ex, ey, ez = extents(p)
 		local h = math.max(ex, ez)
 		if p.CanCollide then

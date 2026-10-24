@@ -1,6 +1,14 @@
 # Changelog
 
 ## 2026-10-24
+- **Main hallway (1F)** detailed from real photos, grouped as `1F_Ground/07_Common_Areas/MainHallway_1F` (Structure, Benches, HallOfFame, OfficeWindow, Lighting, CeilingDevices, Signs, Props, StairRailing):
+  - Cream plaster walls and pillars (repainted parts keep their old look in the `OrigMaterial` / `OrigColor` attributes), white ceiling with cream cross beams on every pillar line, edge beams, 4 new pillars on the open side, white tiles carried over the grey strips by the far walls.
+  - **Sit**: the 4 built-in concrete benches along the wall got white slab tops and 28 E "Sit" spots. The bench ledges have the `Furniture` attribute, so PromptGuard doesn't treat them as walls.
+  - Two honour boards with framed portraits (plain silhouettes) and brass plaques ("Our Founders and Past Administrators", "Samar College Wall of Honor"), and an Announcements board with pinned memos and a calendar.
+  - Office window: low wall with the Samar College banner, shelf with binders and a clock, jars, thermos, papers, desk fan, sagging cables, junction box, posted notices.
+  - **Lights**: 7 tube lights in the hallway + 3 in the open hall beside it, on a "HALLWAY LIGHTS" switch on the pillar (E on / off, R brightness), plus an outlet plate.
+  - Smoke detectors, 2 CCTV domes, bullet camera with a red "Video Surveillance – CCTV in operation" sign, brown "Caution – Do not enter – Authorized personnel only" door (locked), "Please keep this door closed" notice, white grille on the far window, blue water gallons, cartons with a WARNING storage sign, red "Cold Drinks – Refresh ka muna!" wall (own design, no brand), white stair railings with a guard on the open side.
+- PromptGuard: parts with the attribute `Furniture = true` never hide an E prompt.
 - **🚩 Player reports**: new Report button on the left side buttons for every player. Pick who (players in your server), what they did (bullying, bad language, cheating / exploiting, scamming, inappropriate avatar or behavior, asking for / sharing personal info, dating, spamming, other) and optional details (200 characters, Roblox text filter). Limits: 1 report a minute, the same person once every 10 minutes, 15 a day. New `PlayerReports` module, `ReportServer` script, `ReportClient` and shared `ReportConfig`.
 - **🚩 Reports tab** in the admin panel (📋 Player Records): filters Waiting for review / Investigating / Done / All with counts. Each report shows a check box and a status list box:
   - 🟡 **Waiting for review** — no admin has checked this report yet
