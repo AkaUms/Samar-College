@@ -49,7 +49,8 @@ function PlayerData.load(player)
 		for attempt = 1, 3 do
 			local s, result = pcall(function() return store:GetAsync(key(player)) end)
 			if s then data = result break end
-			if tostring(result):find("StudioAccessToApisNotAllowed") then
+			local msg = tostring(result)
+			if msg:find("StudioAccessToApisNotAllowed") or (game:GetService("RunService"):IsStudio() and (msg:find("not allowed") or msg:find("API access"))) then
 				warn("[PlayerData] Saving is OFF in Studio. Turn on Game Settings > Security > Enable Studio Access to API Services.")
 				store = nil break
 			end
@@ -142,11 +143,20 @@ function PlayerData.updateOffline(userId, fn)
 	return s, err
 end
 
+-- the last snapshot of a player who just left (Player Records reads it for the time-out summary)
+local lastSnap = {}
+function PlayerData.lastSnapshot(userId) return lastSnap[userId] end
+
 function PlayerData.release(player)
+	local uid = player.UserId
+	lastSnap[uid] = snapshot(player) or lastSnap[uid]
 	PlayerData.save(player)
-	cache[player.UserId] = nil
-	joinTime[player.UserId] = nil
-	levelJoin[player.UserId] = nil
+	cache[uid] = nil
+	joinTime[uid] = nil
+	levelJoin[uid] = nil
+	task.delay(120, function()
+		if not Players:GetPlayerByUserId(uid) then lastSnap[uid] = nil end
+	end)
 end
 
 Players.PlayerRemoving:Connect(function(player) PlayerData.release(player) end)

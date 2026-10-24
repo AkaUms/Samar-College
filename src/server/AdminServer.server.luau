@@ -6,7 +6,10 @@ local DataStoreService = game:GetService("DataStoreService")
 local MessagingService = game:GetService("MessagingService")
 local RS = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
 local PlayerData = require(script.Parent:WaitForChild("PlayerData"))
+local PlayerRecords = require(script.Parent:WaitForChild("PlayerRecords"))
 local LevelConfig = require(RS:WaitForChild("LevelConfig"))
 local ShopItems = require(RS:WaitForChild("ShopItems"))
 
@@ -326,8 +329,9 @@ handlers.lookup = function(caller, args)
 	local ownedSet = {} for _, id in ipairs(data.Owned or {}) do ownedSet[id] = true end
 	local stats = {} for _, s in ipairs(EDITABLE_STATS) do stats[s] = tonumber(data[s]) or 0 end
 	local b = getBan(userId)
+	local okS, seen = pcall(PlayerRecords.brief, userId)
 	return { ok = true, userId = userId, name = name, displayName = p and p.DisplayName or display,
-		online = p ~= nil, role = roleOf(userId), hasSave = existed,
+		online = p ~= nil, role = roleOf(userId), hasSave = existed, seen = okS and seen or nil,
 		ban = b and { left = fmtDuration(b.untilTime - os.time()), reason = b.reason, by = b.by } or nil,
 		level = tonumber(data.LevelUnlocked) or 1, time = tonumber(data.Time) or 0, levelTime = tonumber(data.LevelTime) or 0,
 		coins = { Common = tonumber(data.Coins.Common) or 0, Event = tonumber(data.Coins.Event) or 0 },
@@ -549,6 +553,72 @@ handlers.listBans = function()
 	end)
 	if not ok then return { ok = false, msg = tostring(err) } end
 	return { ok = true, bans = out }
+end
+
+---------------------------------------------------------------- player records (online in every server, time in / out, all players)
+handlers.rec_online = function()
+	local d = PlayerRecords.online()
+	return { ok = true, players = d.players, servers = d.servers, live = d.live, now = os.time() }
+end
+
+handlers.rec_list = function(caller, args)
+	local res = PlayerRecords.list(caller.UserId, args.sort, args.more == true)
+	res.now = os.time()
+	return res
+end
+
+handlers.rec_history = function(caller, args)
+	local id = tonumber(args.userId)
+	if not id then
+		local uid, name = resolve(args.query)
+		if not uid then return { ok = false, msg = name } end
+		id = uid
+	end
+	local res = PlayerRecords.history(id)
+	res.now = os.time()
+	return res
+end
+
+handlers.rec_activity = function()
+	local res = table.clone(PlayerRecords.activity())
+	res.now = os.time()
+	return res
+end
+
+handlers.rec_backfill = function(caller)
+	if not isOwner(caller.UserId) then return { ok = false, msg = "Only the owner can do this" } end
+	local ok, msg = PlayerRecords.backfill()
+	return { ok = ok, msg = msg }
+end
+
+-- go next to a player in this server
+handlers.rec_goto = function(caller, args)
+	local p = findPlayer(tonumber(args.userId) or 0)
+	if not p then return { ok = false, msg = "That player isn't in this server" } end
+	if p == caller then return { ok = false, msg = "That's you" } end
+	local them = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+	local me = caller.Character
+	local hum = me and me:FindFirstChildOfClass("Humanoid")
+	if not them or not me or not hum then return { ok = false, msg = "No character to move" } end
+	hum.Sit = false
+	local spot = them.CFrame * CFrame.new(0, 0, 4)
+	me:PivotTo(CFrame.lookAt(spot.Position, Vector3.new(them.Position.X, spot.Position.Y, them.Position.Z)))
+	return { ok = true, msg = "Teleported next to " .. p.Name }
+end
+
+-- join the server another player is in
+handlers.rec_join = function(caller, args)
+	local job = type(args.job) == "string" and args.job or nil
+	if not job then return { ok = false, msg = "No server selected" } end
+	if job == PlayerRecords.JOB then return { ok = false, msg = "You're already in this server" } end
+	local s = PlayerRecords.serverOf(job)
+	if not s then return { ok = false, msg = "That server isn't online anymore" } end
+	if s.kind ~= "Public" then return { ok = false, msg = "That's a " .. tostring(s.kind) .. " server, it can't be joined from here" } end
+	if RunService:IsStudio() then return { ok = false, msg = "Joining another server only works in the live game" } end
+	local opts = Instance.new("TeleportOptions")
+	opts.ServerInstanceId = job
+	local ok, err = pcall(function() TeleportService:TeleportAsync(tonumber(s.pl) or game.PlaceId, { caller }, opts) end)
+	return { ok = ok, msg = ok and ("Joining server " .. tostring(s.sc) .. "...") or ("Couldn't join: " .. tostring(err)) }
 end
 
 fn.OnServerInvoke = function(caller, action, args)
