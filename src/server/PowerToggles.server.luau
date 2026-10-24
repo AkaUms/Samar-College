@@ -9,6 +9,9 @@
 --   part "Bulb"                  -> Neon when on
 --   part "LED"                   -> green when on, dark red when off
 --   part "Louver" (OpenAngle)    -> swings open when on
+--   SurfaceGui with ShowWhen = "On" / "Off" -> shown only in that state (e.g. an OPEN / CLOSED sign)
+--   Model attribute Spin          -> a fan turns only while on (CeilingFanSpin reads On)
+-- Optional TurnOnText / TurnOffText attributes replace "Turn on <name>" / "Turn off <name>".
 local CS = game:GetService("CollectionService")
 local TweenService = game:GetService("TweenService")
 
@@ -47,11 +50,13 @@ local function setup(device)
 				d.Enabled = on
 			elseif d:IsA("Sound") then
 				if on then d:Play() else d:Stop() end
+			elseif d:IsA("SurfaceGui") and d:GetAttribute("ShowWhen") then
+				d.Enabled = (d:GetAttribute("ShowWhen") == "On") == on
 			elseif d:IsA("BasePart") then
 				if d.Name == "Screen" then
 					d.Color = on and (d:GetAttribute("OnColor") or d.Color) or OFF_SCREEN
 					for _, g in ipairs(d:GetChildren()) do
-						if g:IsA("SurfaceGui") then g.Enabled = on end
+						if g:IsA("SurfaceGui") and not g:GetAttribute("ShowWhen") then g.Enabled = on end
 					end
 				elseif d.Name == "Bulb" then
 					d.Material = on and Enum.Material.Neon or Enum.Material.SmoothPlastic
@@ -68,7 +73,11 @@ local function setup(device)
 				end
 			end
 		end
-		prompt.ActionText = (on and "Turn off " or "Turn on ") .. name
+		if on then
+			prompt.ActionText = device:GetAttribute("TurnOffText") or ("Turn off " .. name)
+		else
+			prompt.ActionText = device:GetAttribute("TurnOnText") or ("Turn on " .. name)
+		end
 	end
 
 	prompt.Triggered:Connect(function()

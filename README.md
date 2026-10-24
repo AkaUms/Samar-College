@@ -27,6 +27,7 @@ shop with campus coins, and meet other students in servers grouped by year level
 - [x] **Driveway** under the building: railings, painted curbs, IN/OUT lane markings, speed humps, zebra crossing, ceiling and wall lights
 - [x] **Medical and Dental Clinic** (1F): clinic sign, posters and grille outside; nurse's desk, waiting bench, examination couch, dental chair, ward beds with curtains, 15 E seats and an on / off light switch inside
 - [x] **Office of the SVP for Administration** (1F): blade sign, plank door, carved notice boards and bench outside; front office and the SVP's own room behind a glass partition inside, 17 E seats, 2 light switches
+- [x] **Office of the Principal, SHS Department** (1F): Electives and Organizational Structure boards with a long bench, panel door with a flip OPEN / CLOSED sign; front office, principal's room with a conference table and a sliding whiteboard / TV, 20 E seats
 
 ### Gameplay systems
 - [x] **Main gate** — double swing gate, open/close with `E` (both sides) or the control button; auto-closes after 20 s
@@ -46,7 +47,7 @@ shop with campus coins, and meet other students in servers grouped by year level
 - [x] **Map** — tap a pin to teleport to campus places
 - [x] **Settings** — Elementary / Junior High+ server choice, music and sound-effect volume
 - [x] Day / night cycle, ceiling fans that spin
-- [x] **On / off devices** (`PowerToggle` tag): aircons (E on the wall controller), computers, TV and desk lamps (F)
+- [x] **On / off devices** (`PowerToggle` tag): aircons (E on the wall controller), computers, TVs, desk lamps and stand fans (F), OPEN / CLOSED door signs and IN / OUT boards
 - [x] **Live wall clocks** (`LiveClock` tag) showing the real Philippine time
 - [x] **Admin panel** (`F2` or the 🛡 Admin button, owner + co-admins only)
   - Find players by username, user ID, or from the in-server list (online or offline)
