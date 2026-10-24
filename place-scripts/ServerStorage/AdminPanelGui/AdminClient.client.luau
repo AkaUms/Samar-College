@@ -362,7 +362,7 @@ function refreshPages()
 		status = "⚪ Offline" .. (last and ("  •  last seen " .. ago(last)) or "")
 	end
 	local chips = { status, "Role: " .. target.role }
-	if seen and seen.on and seen.a then table.insert(chips, 2, "📍 " .. seen.a) end
+	if (target.reports or 0) > 0 then table.insert(chips, "🚩 " .. target.reports .. (target.reports == 1 and " report" or " reports")) end
 	if target.ban then table.insert(chips, "⛔ Banned (" .. target.ban.left .. " left)") end
 	chipsL.Text = table.concat(chips, "    ")
 	avatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. target.userId .. "&w=150&h=150"
@@ -555,7 +555,7 @@ end)
 local DARK = Color3.fromRGB(40, 30, 10)
 local GREEN_T = Color3.fromRGB(140, 240, 170)
 local RED_T = Color3.fromRGB(255, 150, 150)
-local recB = button(head, "📋  Player Records", C.gold, UDim2.fromOffset(178, 36), { AnchorPoint = Vector2.new(1, 0.5),
+local recB = button(head, "📋  Player Records", C.gold, UDim2.fromOffset(214, 36), { AnchorPoint = Vector2.new(1, 0.5),
 	Position = UDim2.new(1, -58, 0.5, 0), TextColor3 = DARK, TextSize = 14, Font = Enum.Font.GothamBlack })
 local recView = frame(panel, UDim2.new(1, -24, 1, -78), UDim2.fromOffset(12, 68), C.bg, "PlayerRecords")
 recView.BackgroundTransparency = 1 recView.Visible = false
@@ -569,7 +569,7 @@ local function recPage(key, text, order)
 	local sf = Instance.new("ScrollingFrame") sf.Name = key sf.Size = UDim2.fromScale(1, 1) sf.BackgroundTransparency = 1 sf.BorderSizePixel = 0
 	sf.ScrollBarThickness = 6 sf.AutomaticCanvasSize = Enum.AutomaticSize.Y sf.CanvasSize = UDim2.new() sf.Visible = false sf.Parent = recBody
 	pad(sf, 10) list(sf, 6)
-	local b = button(recBar, text, C.card, UDim2.fromOffset(140, 34), { LayoutOrder = order, TextSize = 13 })
+	local b = button(recBar, text, C.card, UDim2.fromOffset(128, 34), { LayoutOrder = order, TextSize = 13 })
 	recPages[key] = sf recTabs[key] = b
 	b.MouseButton1Click:Connect(function() if key == "Log" then recLogUser = nil end showRec(key) end)
 	return sf
@@ -577,9 +577,18 @@ end
 local rOnline = recPage("Online", "🟢  Online now", 1)
 local rAll = recPage("All", "📚  All players", 2)
 local rLog = recPage("Log", "🕒  Time in / out", 3)
-local recSearch = textbox(recBar, "Find a player: username or ID", UDim2.fromOffset(250, 34)) recSearch.LayoutOrder = 4
-local recFindB = button(recBar, "Show log", C.green2, UDim2.fromOffset(90, 34), { LayoutOrder = 5, TextSize = 13 })
-local recRefreshB = button(recBar, "Refresh", C.card, UDim2.fromOffset(110, 34), { LayoutOrder = 6, TextSize = 13 })
+local rRep = recPage("Reports", "🚩  Reports", 4)
+local recSearch = textbox(recBar, "Find a player: name or ID", UDim2.fromOffset(186, 34)) recSearch.LayoutOrder = 5
+local recFindB = button(recBar, "Show log", C.green2, UDim2.fromOffset(84, 34), { LayoutOrder = 6, TextSize = 13 })
+local recRefreshB = button(recBar, "Refresh", C.card, UDim2.fromOffset(90, 34), { LayoutOrder = 7, TextSize = 13 })
+local ReportConfig = require(RS:WaitForChild("ReportConfig"))
+local repCounts = {} -- reports waiting for review / being investigated
+local function updateRepBadges()
+	local n = repCounts.open or 0
+	local badge = n >= 100 and "99+" or tostring(n)
+	recTabs.Reports.Text = "🚩  Reports" .. (n > 0 and (" (" .. badge .. ")") or "")
+	recB.Text = recMode and "🛡  Manage player" or ("📋  Player Records" .. (n > 0 and ("   🚩 " .. badge) or ""))
+end
 
 local function clearKids(o) for _, c in ipairs(o:GetChildren()) do if c:IsA("GuiObject") then c:Destroy() end end end
 local function cell(parent, text, w, col, font, size, order)
@@ -619,7 +628,7 @@ local function syncClock(res) if type(res) == "table" and type(res.now) == "numb
 local function setMode(records)
 	recMode = records
 	left.Visible = not records right.Visible = not records recView.Visible = records
-	recB.Text = records and "🛡  Manage player" or "📋  Player Records"
+	updateRepBadges()
 	if records then showRec(recTab) end
 end
 recB.MouseButton1Click:Connect(function() setMode(not recMode) end)
@@ -642,50 +651,91 @@ local function sessionOut(e, onlineSince)
 	return "not recorded", C.dim, "—"
 end
 
--- 🟢 ONLINE NOW
-local loadingOnline = false
-local function loadOnline(keepScroll)
-	if loadingOnline then return end
-	loadingOnline = true
+-- 🟢 ONLINE NOW: one box per server (click its top bar to minimize / maximize it)
+local loadingOnline, lastOnline = false, nil
+local collapsed = {} -- [server ID] = true while minimized
+local renderOnline
+-- a read-only text box, so a server ID can be selected and copied (Ctrl+C)
+local function idBox(parent, text, w, order)
+	local t = Instance.new("TextBox") t.Text = text t.TextEditable = false t.ClearTextOnFocus = false
+	t.BackgroundColor3 = C.input t.TextColor3 = C.text t.Font = Enum.Font.Code t.TextSize = 12
+	t.Size = UDim2.fromOffset(w, 24) t.LayoutOrder = order or 0 t.TextXAlignment = Enum.TextXAlignment.Left t.Parent = parent
+	corner(t, 6) local p = Instance.new("UIPadding") p.PaddingLeft = UDim.new(0, 8) p.Parent = t
+	return t
+end
+local function serverBox(s, members, order)
+	local card = frame(rOnline, UDim2.new(1, -4, 0, 0), nil, C.card) card.AutomaticSize = Enum.AutomaticSize.Y card.LayoutOrder = order
+	corner(card, 12) stroke(card, s.here and C.gold or C.stroke, s.here and 1.4 or 1) pad(card, 10) list(card, 6)
+	local small = collapsed[s.job] == true
+	local function toggle() collapsed[s.job] = not small renderOnline(lastOnline, true) end
+	local bar = Instance.new("TextButton") bar.Text = "" bar.AutoButtonColor = false bar.BackgroundTransparency = 1
+	bar.Size = UDim2.new(1, 0, 0, 30) bar.LayoutOrder = 0 bar.Parent = card list(bar, 8, true)
+	bar.MouseButton1Click:Connect(toggle)
+	label(bar, "🖥  Server " .. tostring(s.sc) .. (s.here and "  •  you are here" or ""), 15, Enum.Font.GothamBlack, C.gold,
+		{ Size = UDim2.fromOffset(290, 30), TextWrapped = false, TextTruncate = Enum.TextTruncate.AtEnd, LayoutOrder = 1 })
+	local info = string.format("%d%s players  •  %s  •  %s", #members, s.max and ("/" .. s.max) or "", tostring(s.pk or "Main campus"), tostring(s.kind or "Public"))
+	if s.start then info ..= "  •  running " .. fmtDur(nowS() - s.start) end
+	label(bar, info, 12, Enum.Font.GothamBold, C.dim, { Size = UDim2.fromOffset(330, 30), TextWrapped = false, TextTruncate = Enum.TextTruncate.AtEnd, LayoutOrder = 2 })
+	if not s.here then smallBtn(bar, "Join server", C.blue, 104, 3, function() joinServer(s.job) end) end
+	smallBtn(bar, small and "Maximize" or "Minimize", C.input, 90, 4, toggle)
+	if small then return end
+	local idRow = row(card, 26, 1)
+	label(idRow, "Server ID", 12, Enum.Font.GothamBold, C.dim, { Size = UDim2.fromOffset(66, 26), TextWrapped = false, LayoutOrder = 1 })
+	idBox(idRow, tostring(s.job), 320, 2)
+	label(idRow, "click the ID, then Ctrl+C to copy", 11, Enum.Font.Gotham, C.dim, { Size = UDim2.fromOffset(240, 26), TextWrapped = false, LayoutOrder = 3 })
+	headerRow(card, { { "Player", 230 }, { "Server ID", 90 }, { "Time in", 70 }, { "Online for", 70 }, { "Title", 110 } }, 2)
+	if #members == 0 then note(card, "Nobody in this server right now.", nil, 3) end
+	for i, p in ipairs(members) do
+		local r = tableRow(card, 40, 2 + i, i % 2 == 1)
+		personCell(r, p.u, tostring(p.d or p.n) .. (p.u == player.UserId and "  (you)" or ""), "@" .. tostring(p.n) .. "  •  ID " .. tostring(p.u), 230, 1)
+		cell(r, tostring(p.sc or s.sc), 90, C.text, Enum.Font.Code, 12, 2)
+		cell(r, fmtClock(p.t), 70, C.text, nil, 12, 3)
+		cell(r, fmtDur(nowS() - (p.t or nowS())), 70, GREEN_T, Enum.Font.GothamBold, 12, 4)
+		cell(r, p.title or "—", 110, C.gold, Enum.Font.GothamBold, 12, 5)
+		if s.here then
+			if p.u ~= player.UserId then smallBtn(r, "Go to", C.blue, 60, 6, function() goTo(p.u) end) end
+		else
+			smallBtn(r, "Join", C.blue, 60, 6, function() joinServer(s.job) end)
+		end
+		smallBtn(r, "Log", C.card, 44, 7, function() openLog(p.u) end)
+		smallBtn(r, "Manage", C.green2, 64, 8, function() manage(p.u) end)
+	end
+end
+
+function renderOnline(res, keepScroll)
+	if not res then return end
 	local pos = rOnline.CanvasPosition
-	if not keepScroll then clearKids(rOnline) note(rOnline, "Loading who is online...") end
-	local res = call("rec_online", {})
-	loadingOnline = false
 	clearKids(rOnline)
 	if not res.ok then note(rOnline, res.msg or "Couldn't load", RED_T) return end
-	syncClock(res)
 	local np, ns = #res.players, #res.servers
 	label(rOnline, string.format("🟢  %d player%s online in %d server%s", np, np == 1 and "" or "s", ns, ns == 1 and "" or "s"),
 		16, Enum.Font.GothamBlack, C.text).LayoutOrder = 0
+	local mine = row(rOnline, 28, 1)
+	label(mine, "Your server ID", 12, Enum.Font.GothamBold, C.dim, { Size = UDim2.fromOffset(96, 28), TextWrapped = false, LayoutOrder = 1 })
+	idBox(mine, tostring(res.here or "—"), 320, 2)
+	smallBtn(mine, "Minimize all", C.card, 104, 3, function() for _, s in ipairs(res.servers) do collapsed[s.job] = true end renderOnline(res, true) end)
+	smallBtn(mine, "Maximize all", C.card, 104, 4, function() collapsed = {} renderOnline(res, true) end)
 	note(rOnline, (res.live and "Live from every server, refreshes by itself every 15 s." or
 		"Studio test: only this server is shown and nothing is saved (turn on API access for the real data).") ..
-		"  Times are in your time zone.", nil, 1)
+		"  Click a server's top bar to minimize / maximize it. Times are in your time zone.", nil, 2)
 	for si, s in ipairs(res.servers) do
-		local card = cardSection(rOnline, "🖥  Server " .. tostring(s.sc) .. (s.here and "   •   you are here" or ""), 10 + si)
-		local top = row(card, 30, 0)
-		local info = string.format("%s  •  %s  •  %d%s players", tostring(s.pk or "Main campus"), tostring(s.kind or "Public"),
-			s.count or 0, s.max and ("/" .. s.max) or "")
-		if s.start then info ..= "  •  running " .. fmtDur(nowS() - s.start) end
-		label(top, info, 12, Enum.Font.GothamBold, C.dim, { Size = UDim2.fromOffset(600, 30), TextWrapped = false, LayoutOrder = 1 })
-		if not s.here then smallBtn(top, "Join this server", C.blue, 140, 2, function() joinServer(s.job) end) end
-		headerRow(card, { { "Player", 200 }, { "📍 Where on campus", 200 }, { "Time in", 66 }, { "Online for", 64 }, { "Title", 100 } }, 1)
-		local mine = {}
-		for _, p in ipairs(res.players) do if p.job == s.job then table.insert(mine, p) end end
-		table.sort(mine, function(a, b) return (a.t or 0) < (b.t or 0) end)
-		if #mine == 0 then note(card, "Nobody in this server right now.", nil, 2) end
-		for i, p in ipairs(mine) do
-			local r = tableRow(card, 40, 1 + i, i % 2 == 1)
-			personCell(r, p.u, tostring(p.d or p.n) .. (p.u == player.UserId and "  (you)" or ""), "@" .. tostring(p.n) .. "  •  ID " .. tostring(p.u), 200, 1)
-			cell(r, p.a or "—", 200, C.text, Enum.Font.GothamBold, 12, 2)
-			cell(r, fmtClock(p.t), 66, C.text, nil, 12, 3)
-			cell(r, fmtDur(nowS() - (p.t or nowS())), 64, GREEN_T, Enum.Font.GothamBold, 12, 4)
-			cell(r, p.title or "—", 100, C.gold, Enum.Font.GothamBold, 12, 5)
-			if s.here and p.u ~= player.UserId then smallBtn(r, "Go to", C.blue, 54, 6, function() goTo(p.u) end) end
-			smallBtn(r, "Log", C.card, 44, 7, function() openLog(p.u) end)
-			smallBtn(r, "Manage", C.green2, 64, 8, function() manage(p.u) end)
-		end
+		local members = {}
+		for _, p in ipairs(res.players) do if p.job == s.job then table.insert(members, p) end end
+		table.sort(members, function(a, b) return (a.t or 0) < (b.t or 0) end)
+		serverBox(s, members, 10 + si)
 	end
 	if keepScroll then task.delay(0.05, function() rOnline.CanvasPosition = pos end) end
+end
+
+local function loadOnline(keepScroll)
+	if loadingOnline then return end
+	loadingOnline = true
+	if not keepScroll then clearKids(rOnline) note(rOnline, "Loading who is online...") end
+	local res = call("rec_online", {})
+	loadingOnline = false
+	syncClock(res)
+	lastOnline = res
+	renderOnline(res, keepScroll)
 end
 
 -- 📚 ALL PLAYERS
@@ -780,7 +830,7 @@ local function renderHistory(res)
 	local info = frame(body, UDim2.fromOffset(760, 64), nil, C.card) info.BackgroundTransparency = 1 info.LayoutOrder = 2 list(info, 3)
 	local status
 	if res.on then
-		status = "🟢 Online now — server " .. tostring(res.sc) .. (res.here and " (this server)" or "") .. "   •   📍 " .. tostring(res.a or "—") ..
+		status = "🟢 Online now — server " .. tostring(res.sc) .. (res.here and " (this server)" or "") .. "   •   Server ID " .. tostring(res.job or "—") ..
 			"   •   time in " .. fmtClock(res.t) .. " (" .. fmtDur(nowS() - (res.t or nowS())) .. " ago)"
 	else
 		status = "⚪ Offline   •   last time out " .. (res.lastOut and (fmtWhen(res.lastOut) .. " (" .. ago(res.lastOut) .. ")") or "—")
@@ -836,13 +886,200 @@ local function loadLog()
 	end
 end
 
+-- 🚩 REPORTS: each report goes Waiting for review -> Investigating (by an admin) -> Done (checked by an admin)
+local STATUS_INFO = {
+	open = { icon = "🟡", name = "Waiting for review", col = C.gold },
+	investigating = { icon = "🔍", name = "Investigating", col = Color3.fromRGB(120, 175, 255) },
+	done = { icon = "✅", name = "Done (checked)", col = GREEN_T },
+}
+local repFilter, repTarget, repTargetName = "open", nil, nil
+local repItems, repRes, repMenu, repDone = {}, nil, {}, {}
+local renderReports, loadReports, loadingRep = nil, nil, false
+
+local function refreshRepCounts()
+	local r = call("rep_counts", {})
+	if r.ok then repCounts = r.counts or {} updateRepBadges() end
+end
+
+-- check box: empty = waiting for review, blue with dots = investigating, green tick = done
+local function checkbox(parent, status, order, onClick)
+	local b = Instance.new("TextButton") b.Text = status == "investigating" and "..." or "" b.Font = Enum.Font.GothamBlack b.TextSize = 14
+	b.TextColor3 = C.text b.AutoButtonColor = true b.Size = UDim2.fromOffset(26, 26) b.LayoutOrder = order
+	b.BackgroundColor3 = status == "done" and C.green2 or (status == "investigating" and C.blue or C.input) b.Parent = parent
+	corner(b, 6) stroke(b, (STATUS_INFO[status] or STATUS_INFO.open).col, 2)
+	if status == "done" then
+		local s1 = frame(b, UDim2.fromOffset(8, 3), UDim2.fromOffset(9, 15), C.text) s1.AnchorPoint = Vector2.new(0.5, 0.5) s1.Rotation = 45
+		local s2 = frame(b, UDim2.fromOffset(14, 3), UDim2.fromOffset(15, 12), C.text) s2.AnchorPoint = Vector2.new(0.5, 0.5) s2.Rotation = -45
+	end
+	b.MouseButton1Click:Connect(onClick)
+	return b
+end
+
+local function setReportStatus(rep, status, outcome, proof)
+	local r = call("rep_status", { id = rep.id, status = status, outcome = outcome, note = proof })
+	notify(r.msg, r.ok)
+	if r.ok and r.report then
+		for i, it in ipairs(repItems) do if it.id == rep.id then repItems[i] = r.report end end
+		repDone[rep.id] = nil
+		if r.counts then repCounts = r.counts updateRepBadges() end
+	end
+	renderReports(true)
+end
+
+local function openReportsFor(userId, name)
+	repTarget, repTargetName = userId, name
+	recTab = "Reports"
+	if recMode then showRec("Reports") else setMode(true) end
+end
+
+local WHAT = { reported = "reported this player", investigating = "started investigating", open = "set it back to waiting for review" }
+local function reportCard(rep, order)
+	local info = STATUS_INFO[rep.status] or STATUS_INFO.open
+	local who, by = rep.who or {}, rep.by or {}
+	local card = frame(rRep, UDim2.new(1, -4, 0, 0), nil, C.card) card.AutomaticSize = Enum.AutomaticSize.Y card.LayoutOrder = order
+	corner(card, 12) stroke(card, info.col, 1.4) pad(card, 12) list(card, 6)
+	local toggleMenu = function() repMenu[rep.id] = not repMenu[rep.id] renderReports(true) end
+	-- check box, reported player, what they did, when
+	local top = row(card, 36, 1)
+	checkbox(top, rep.status, 1, toggleMenu)
+	personCell(top, who.u, "🚩  " .. tostring(who.d) .. "  (@" .. tostring(who.n) .. ")", "Reported player  •  ID " .. tostring(who.u), 290, 2)
+	local chip = label(top, tostring(rep.reasonName or rep.reason), 12, Enum.Font.GothamBold, DARK, { Size = UDim2.fromOffset(240, 24),
+		BackgroundTransparency = 0, BackgroundColor3 = C.gold, TextXAlignment = Enum.TextXAlignment.Center, TextWrapped = false,
+		TextTruncate = Enum.TextTruncate.AtEnd, LayoutOrder = 3 })
+	corner(chip, 12)
+	cell(top, fmtWhen(rep.t) .. "  (" .. ago(rep.t) .. ")", 250, C.dim, nil, 12, 4)
+	note(card, "Reported by " .. tostring(by.d) .. " (@" .. tostring(by.n) .. ", ID " .. tostring(by.u) .. ")   •   Server " ..
+		tostring(rep.srv and rep.srv.sc or "—") .. "   •   Report ID " .. tostring(rep.id), nil, 2)
+	if rep.details and rep.details ~= "" then
+		label(card, "“" .. rep.details .. "”", 14, Enum.Font.Gotham, C.text).LayoutOrder = 3
+	else
+		note(card, "(no extra details written)", nil, 3)
+	end
+	local st
+	if rep.status == "investigating" and rep.inv then
+		st = "🔍  Investigating by " .. tostring(rep.inv.n) .. " (" .. tostring(rep.inv.r) .. ")   •   since " .. fmtWhen(rep.inv.t)
+	elseif rep.status == "done" and rep.done then
+		st = "✅  Done — checked by " .. tostring(rep.done.n) .. " (" .. tostring(rep.done.r) .. ")   •   " .. fmtWhen(rep.done.t) .. "   •   Result: " .. tostring(rep.done.o)
+	else
+		st = "🟡  Waiting for review — no admin has checked this report yet"
+	end
+	label(card, st, 14, Enum.Font.GothamBold, info.col).LayoutOrder = 4
+	if rep.status == "done" and rep.done and rep.done.note and rep.done.note ~= "" then
+		label(card, "Proof / notes: “" .. rep.done.note .. "”", 13, Enum.Font.Gotham, C.text).LayoutOrder = 5
+	end
+	note(card, rep.on and ("🟢  " .. tostring(who.d) .. " is online now in server " .. tostring(rep.osc) .. (rep.here and " (your server)" or ""))
+		or ("⚪  " .. tostring(who.d) .. " is not online right now"), rep.on and GREEN_T or C.dim, 6)
+	local btns = row(card, 30, 7)
+	smallBtn(btns, info.icon .. "  " .. info.name .. "   •   change", C.input, 250, 1, toggleMenu)
+	if rep.on and rep.here and who.u ~= player.UserId then
+		smallBtn(btns, "Go to", C.blue, 70, 2, function() goTo(who.u) end)
+	elseif rep.on and not rep.here and rep.ojob then
+		smallBtn(btns, "Join their server", C.blue, 140, 2, function() joinServer(rep.ojob) end)
+	end
+	smallBtn(btns, "Manage player", C.green2, 120, 3, function() manage(who.u) end)
+	smallBtn(btns, "Time in / out", C.input, 110, 4, function() openLog(who.u) end)
+	if repTarget ~= who.u then smallBtn(btns, "All reports about them", C.input, 170, 5, function() openReportsFor(who.u, who.d) end) end
+	-- the status list box
+	if repMenu[rep.id] then
+		local menu = frame(card, UDim2.fromOffset(280, 0), nil, C.input) menu.AutomaticSize = Enum.AutomaticSize.Y menu.LayoutOrder = 8
+		corner(menu, 8) stroke(menu, C.stroke) pad(menu, 6) list(menu, 4)
+		note(menu, "Set the status of this report:", nil, 0)
+		for i, k in ipairs({ "open", "investigating", "done" }) do
+			local text = STATUS_INFO[k].icon .. "  " .. (k == "open" and "Waiting for review" or k == "investigating" and "Investigating (by me)" or "Done (checked by me)")
+			smallBtn(menu, text, k == rep.status and C.green or C.card, 266, i, function()
+				repMenu[rep.id] = nil
+				if k == "done" then repDone[rep.id] = repDone[rep.id] or {} renderReports(true)
+				elseif k ~= rep.status or k == "investigating" then setReportStatus(rep, k)
+				else renderReports(true) end
+			end)
+		end
+	end
+	-- the Done form: result + proof
+	local form = repDone[rep.id]
+	if form then
+		local f = frame(card, UDim2.new(1, 0, 0, 0), nil, C.input) f.AutomaticSize = Enum.AutomaticSize.Y f.LayoutOrder = 9
+		corner(f, 8) pad(f, 10) list(f, 6)
+		label(f, "✅  Mark as done — what was the result?", 13, Enum.Font.GothamBlack, GREEN_T).LayoutOrder = 0
+		local chips = row(f, 30, 1)
+		for i, o in ipairs(ReportConfig.Outcomes) do
+			smallBtn(chips, o, form.o == o and C.green or C.card, 126, i, function() form.o = o renderReports(true) end)
+		end
+		local box = textbox(f, "Proof / what you found (optional) — e.g. saw them using fly hacks at 2:15 PM in the canteen", UDim2.new(1, 0, 0, 34))
+		box.LayoutOrder = 2 box.Text = form.note or ""
+		box:GetPropertyChangedSignal("Text"):Connect(function() form.note = box.Text end)
+		local fb = row(f, 30, 3)
+		smallBtn(fb, "Save as done", C.green2, 130, 1, function()
+			if not form.o then notify("Pick the result first", false) return end
+			setReportStatus(rep, "done", form.o, form.note)
+		end)
+		smallBtn(fb, "Cancel", C.card, 90, 2, function() repDone[rep.id] = nil renderReports(true) end)
+	end
+	-- history, newest first
+	local log = rep.log or {}
+	for j = #log, math.max(1, #log - 4), -1 do
+		local e = log[j]
+		local what = e.a == "done" and ("marked it done (" .. tostring(e.o) .. ")") or WHAT[e.a] or tostring(e.a)
+		note(card, "•  " .. fmtWhen(e.t) .. "   " .. tostring(e.n) .. (e.r and (" (" .. e.r .. ")") or "") .. " " .. what, nil, 20 + (#log - j))
+	end
+end
+
+function renderReports(keepScroll)
+	local pos = rRep.CanvasPosition
+	clearKids(rRep)
+	local ctl = row(rRep, 30, 0)
+	local function chip(text, key, w, order)
+		smallBtn(ctl, text, (repFilter == key and not repTarget) and C.green or C.card, w, order, function()
+			repFilter, repTarget, repTargetName = key, nil, nil
+			loadReports()
+		end)
+	end
+	chip("🟡  Waiting for review" .. (repCounts.open and (" (" .. repCounts.open .. ")") or ""), "open", 200, 1)
+	chip("🔍  Investigating" .. (repCounts.investigating and (" (" .. repCounts.investigating .. ")") or ""), "investigating", 170, 2)
+	chip("✅  Done", "done", 100, 3)
+	chip("All reports", "all", 110, 4)
+	if repTarget then
+		local tr = row(rRep, 28, 1)
+		label(tr, "🚩  Every report about " .. tostring(repTargetName or repTarget), 13, Enum.Font.GothamBold, C.gold,
+			{ Size = UDim2.fromOffset(520, 28), TextWrapped = false, TextTruncate = Enum.TextTruncate.AtEnd, LayoutOrder = 1 })
+		smallBtn(tr, "Back to all reports", C.card, 160, 2, function() repTarget, repTargetName = nil, nil loadReports() end)
+	end
+	note(rRep, "Players send these with the 🚩 Report button. Click the box or the status button to change it:  🟡 Waiting for review  →  " ..
+		"🔍 Investigating (the other admins see your name)  →  ✅ Done (pick the result and add the proof). Times are in your time zone.", nil, 2)
+	if repRes and repRes.ok == false then note(rRep, repRes.msg or "Couldn't load reports", RED_T, 3) end
+	if repRes and repRes.live == false then note(rRep, "Studio test: reports are kept for this test session only.", C.gold, 3) end
+	if #repItems == 0 and repRes and repRes.ok then
+		local empty = repTarget and "No reports about this player." or ({ open = "No reports are waiting for review.",
+			investigating = "Nobody is investigating a report right now.", done = "No checked reports yet.", all = "No reports yet." })[repFilter]
+		note(rRep, empty, nil, 4)
+	end
+	for i, rep in ipairs(repItems) do reportCard(rep, 10 + i) end
+	if repRes and repRes.more then smallBtn(rRep, "Load more reports", C.card, 200, 9999, function() loadReports(true) end) end
+	if keepScroll then task.delay(0.05, function() rRep.CanvasPosition = pos end) end
+end
+
+function loadReports(more)
+	if loadingRep then return end
+	loadingRep = true
+	if not more then repItems, repMenu, repDone = {}, {}, {} clearKids(rRep) note(rRep, "Loading reports...") end
+	local res = call("rep_list", { filter = repFilter, more = more == true, target = repTarget })
+	loadingRep = false
+	syncClock(res)
+	repRes = res
+	if res.ok then
+		for _, it in ipairs(res.items or {}) do table.insert(repItems, it) end
+		if res.counts then repCounts = res.counts updateRepBadges() end
+	end
+	renderReports(more)
+end
+
 function showRec(key)
 	recTab = key
 	for k, f in pairs(recPages) do
 		f.Visible = k == key
 		recTabs[k].BackgroundColor3 = k == key and C.green or C.card
 	end
-	if key == "Online" then task.spawn(loadOnline) elseif key == "All" then task.spawn(loadAll, false) else task.spawn(loadLog) end
+	if key == "Online" then task.spawn(loadOnline) elseif key == "All" then task.spawn(loadAll, false)
+	elseif key == "Reports" then task.spawn(loadReports) else task.spawn(loadLog) end
 end
 
 local function findLog()
@@ -855,11 +1092,16 @@ recSearch.FocusLost:Connect(function(enter) if enter then findLog() end end)
 recRefreshB.MouseButton1Click:Connect(function() showRec(recTab) end)
 
 -- "Time in / out" button on the selected player's card
-nameL.Size = UDim2.new(1, -250, 0, 24)
+nameL.Size = UDim2.new(1, -350, 0, 24)
 chipsL.TextWrapped = false chipsL.TextTruncate = Enum.TextTruncate.AtEnd
 local cardLogB = button(cardP, "🕒  Time in / out", C.card, UDim2.fromOffset(140, 28), { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -10, 0, 10), TextSize = 12 })
 cardLogB.MouseButton1Click:Connect(function()
 	if target then openLog(target.userId) else notify("Select a player first", false) end
+end)
+local cardRepB = button(cardP, "🚩  Reports", C.card, UDim2.fromOffset(100, 28), { AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -156, 0, 10), TextSize = 12 })
+cardRepB.MouseButton1Click:Connect(function()
+	if not target then notify("Select a player first", false) return end
+	openReportsFor(target.userId, target.displayName)
 end)
 
 -- Online now refreshes itself while it is open
@@ -886,10 +1128,48 @@ local function open()
 	loadAdmins()
 	task.spawn(loadBans)
 	if recMode then showRec(recTab) end
+	task.spawn(refreshRepCounts)
 	dim.Visible = true panel.Visible = true
 end
 local function close() panel.Visible = false dim.Visible = false end
 closeB.MouseButton1Click:Connect(close)
+
+-- notices: new reports and who is checking them (shows even while the panel is closed)
+local banner = Instance.new("TextButton") banner.Name = "ReportNotice" banner.AnchorPoint = Vector2.new(0.5, 0)
+banner.Position = UDim2.new(0.5, 0, 0, 130) banner.Size = UDim2.fromOffset(620, 44) banner.BackgroundColor3 = Color3.fromRGB(70, 32, 32)
+banner.TextColor3 = C.text banner.Font = Enum.Font.GothamBold banner.TextSize = 14 banner.TextWrapped = true banner.Visible = false
+banner.ZIndex = 20 banner.Parent = gui corner(banner, 10) stroke(banner, C.red, 1.5)
+local bannerToken = 0
+banner.MouseButton1Click:Connect(function()
+	banner.Visible = false
+	repFilter, repTarget, repTargetName = "open", nil, nil
+	recTab = "Reports"
+	if not panel.Visible then open() end
+	if recMode then showRec("Reports") else setMode(true) end
+end)
+local noticeEvent = RS:WaitForChild("AdminRemotes"):WaitForChild("AdminNotice", 10)
+if noticeEvent then
+	noticeEvent.OnClientEvent:Connect(function(m)
+		if type(m) ~= "table" then return end
+		task.spawn(refreshRepCounts)
+		if m.kind == "new" and panel.Visible and recMode and recTab == "Reports" and next(repDone) == nil then task.spawn(loadReports) end
+		if m.kind ~= "new" and m.admin == player.Name then return end -- your own change
+		local text
+		if m.kind == "new" then
+			text = "🚩  New report: " .. tostring(m.by) .. " reported " .. tostring(m.who) .. " (@" .. tostring(m.whon) .. ") for " .. tostring(m.reason) .. "   —   click to see it"
+		elseif m.kind == "investigating" then
+			text = "🔍  " .. tostring(m.admin) .. " is investigating the report about " .. tostring(m.who)
+		elseif m.kind == "done" then
+			text = "✅  " .. tostring(m.admin) .. " checked the report about " .. tostring(m.who) .. " (" .. tostring(m.o) .. ")"
+		else
+			text = "🟡  The report about " .. tostring(m.who) .. " is waiting for review again"
+		end
+		bannerToken += 1
+		local my = bannerToken
+		banner.Text = text banner.Visible = true
+		task.delay(8, function() if bannerToken == my then banner.Visible = false end end)
+	end)
+end
 UIS.InputBegan:Connect(function(input, processed)
 	if processed then return end
 	if input.KeyCode == Enum.KeyCode.F2 then if panel.Visible then close() else open() end end

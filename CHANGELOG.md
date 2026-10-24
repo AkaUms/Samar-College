@@ -1,6 +1,15 @@
 # Changelog
 
 ## 2026-10-24
+- **🚩 Player reports**: new Report button on the left side buttons for every player. Pick who (players in your server), what they did (bullying, bad language, cheating / exploiting, scamming, inappropriate avatar or behavior, asking for / sharing personal info, dating, spamming, other) and optional details (200 characters, Roblox text filter). Limits: 1 report a minute, the same person once every 10 minutes, 15 a day. New `PlayerReports` module, `ReportServer` script, `ReportClient` and shared `ReportConfig`.
+- **🚩 Reports tab** in the admin panel (📋 Player Records): filters Waiting for review / Investigating / Done / All with counts. Each report shows a check box and a status list box:
+  - 🟡 **Waiting for review** — no admin has checked this report yet
+  - 🔍 **Investigating by <admin> (role)** — the other admins see who took it
+  - ✅ **Done — checked by <admin> (role)** with the result (Warned / Kicked / Banned / No rule broken / Other) and the proof / notes
+  - Plus who reported it, the server, details, whether the reported player is online now, Go to / Join their server, Manage player, Time in / out, All reports about them, and the report's history.
+  - Admins in every server get a notice when a report comes in or someone takes one; the 📋 button and tab show how many are waiting. The selected player's card shows their number of reports and a 🚩 Reports button.
+- **Online now**: "Where on campus" removed. Shows your server ID and every server's full ID (click, Ctrl+C to copy) and each player's server ID. Server boxes minimize / maximize (click the top bar, or Minimize all / Maximize all). Join server button on each other server and Join on each of its players.
+- `StudioStores` module: the Studio test stand-ins, now shared by Player Records and Player Reports.
 - **Player Records** in the admin panel (📋 button in the panel header), new `PlayerRecords` module:
   - 🟢 **Online now**: everyone online in every server, grouped by server (code, place, type, players, how long it has been running). Each player shows where they are on campus (room or area, e.g. "1F · FH3 COED Room", "2F · Corridor", "San Roque Street (outside campus)"), time in, how long they've been online and their title. Buttons: Go to (same server), Join this server (other public servers), Log, Manage. Refreshes every 15 s.
   - 📚 **All players**: every player who has joined, by user ID, with title, time played, coins, number of joins, first joined and last seen (or "Online"). Sort by last seen or most time played, 20 per page with "Load more". The owner's "Add older saves" adds players from before Player Records to the list.

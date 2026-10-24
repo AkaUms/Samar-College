@@ -54,7 +54,9 @@ shop with campus coins, and meet other students in servers grouped by year level
   - **Banned players** list with one-click Unban
   - Owner can promote players to Co-Admin and remove them
   - Changes apply only when **Save** is pressed
-  - **📋 Player Records**: who is online in every server and where they are on campus, every player's progress by user ID, and time in / time out logs (Go to, Join server, Log, Manage)
+  - **📋 Player Records**: who is online in every server (server IDs, minimize / maximize, Join server), every player's progress by user ID, and time in / time out logs (Go to, Join, Log, Manage)
+  - **🚩 Reports**: players' reports with a status for each — Waiting for review → Investigating (by which admin) → Done (checked by which admin, result and proof); notices to all admins
+- [x] **🚩 Report a player** — every player can report someone in their server for breaking the rules (reason + details, text filtered, cooldowns)
 - [x] **Separate quiz timer** — total time stays on the leaderboard; a per-level timer unlocks the next quiz and restarts after each level change
 
 ### Planned / to do
@@ -110,6 +112,8 @@ All of it is in Roblox's cloud for this experience (Creator Hub → Samar Colleg
 | `SamarCollege_LastSeen_v1` | OrderedDataStore | `<UserId>` | Last time seen (unix time), for the All players list |
 | `SamarCollege_PlayTime_v1` | OrderedDataStore | `<UserId>` | Total seconds played, for "Most time played" |
 | `SamarCollege_Admins_v1` / `SamarCollege_Bans_v1` | DataStore | `coadmins` / `b_<UserId>` | Co-admins and bans |
+| `SamarCollege_Reports_v1` | DataStore | `r_<time>_<ReporterId>` / `t_<UserId>` | Player reports (reason, details, status, who investigated / checked it, result, proof, history) / report ids about one player |
+| `SamarCollege_ReportsWaiting_v1` / `…Checking_v1` / `…Done_v1` / `…All_v1` | OrderedDataStore | report id | Report lists by status, newest first |
 | `SC_Online_v1` / `SC_Servers_v1` / `SC_Sessions_v1` | MemoryStore sorted maps | `<UserId>` / `<JobId>` / time + UserId | Live: who is online and where, running servers, recent time in / out (clears itself) |
 
 ---

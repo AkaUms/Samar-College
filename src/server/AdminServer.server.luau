@@ -10,6 +10,7 @@ local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
 local PlayerData = require(script.Parent:WaitForChild("PlayerData"))
 local PlayerRecords = require(script.Parent:WaitForChild("PlayerRecords"))
+local PlayerReports = require(script.Parent:WaitForChild("PlayerReports"))
 local LevelConfig = require(RS:WaitForChild("LevelConfig"))
 local ShopItems = require(RS:WaitForChild("ShopItems"))
 
@@ -25,6 +26,8 @@ local remotes = RS:FindFirstChild("AdminRemotes") or Instance.new("Folder")
 remotes.Name = "AdminRemotes" remotes.Parent = RS
 local fn = remotes:FindFirstChild("AdminRequest") or Instance.new("RemoteFunction")
 fn.Name = "AdminRequest" fn.Parent = remotes
+local adminNotice = remotes:FindFirstChild("AdminNotice") or Instance.new("RemoteEvent") -- new reports etc. (admins only)
+adminNotice.Name = "AdminNotice" adminNotice.Parent = remotes
 local signals = ServerStorage:FindFirstChild("AdminSignals") or Instance.new("Folder")
 signals.Name = "AdminSignals" signals.Parent = ServerStorage
 local refreshGear = signals:FindFirstChild("RefreshGear") or Instance.new("BindableEvent")
@@ -330,8 +333,9 @@ handlers.lookup = function(caller, args)
 	local stats = {} for _, s in ipairs(EDITABLE_STATS) do stats[s] = tonumber(data[s]) or 0 end
 	local b = getBan(userId)
 	local okS, seen = pcall(PlayerRecords.brief, userId)
+	local okR, reports = pcall(PlayerReports.countFor, userId)
 	return { ok = true, userId = userId, name = name, displayName = p and p.DisplayName or display,
-		online = p ~= nil, role = roleOf(userId), hasSave = existed, seen = okS and seen or nil,
+		online = p ~= nil, role = roleOf(userId), hasSave = existed, seen = okS and seen or nil, reports = okR and reports or 0,
 		ban = b and { left = fmtDuration(b.untilTime - os.time()), reason = b.reason, by = b.by } or nil,
 		level = tonumber(data.LevelUnlocked) or 1, time = tonumber(data.Time) or 0, levelTime = tonumber(data.LevelTime) or 0,
 		coins = { Common = tonumber(data.Coins.Common) or 0, Event = tonumber(data.Coins.Event) or 0 },
@@ -558,7 +562,7 @@ end
 ---------------------------------------------------------------- player records (online in every server, time in / out, all players)
 handlers.rec_online = function()
 	local d = PlayerRecords.online()
-	return { ok = true, players = d.players, servers = d.servers, live = d.live, now = os.time() }
+	return { ok = true, players = d.players, servers = d.servers, live = d.live, here = d.here, now = os.time() }
 end
 
 handlers.rec_list = function(caller, args)
@@ -620,6 +624,31 @@ handlers.rec_join = function(caller, args)
 	local ok, err = pcall(function() TeleportService:TeleportAsync(tonumber(s.pl) or game.PlaceId, { caller }, opts) end)
 	return { ok = ok, msg = ok and ("Joining server " .. tostring(s.sc) .. "...") or ("Couldn't join: " .. tostring(err)) }
 end
+
+---------------------------------------------------------------- player reports (🚩 Reports tab)
+handlers.rep_list = function(caller, args)
+	local res = PlayerReports.list(caller.UserId, args.filter, args.more == true, args.target)
+	res.now = os.time()
+	return res
+end
+
+-- status = "open" (waiting for review) | "investigating" | "done" (with outcome + proof note)
+handlers.rep_status = function(caller, args)
+	local res = PlayerReports.setStatus(caller, roleOf(caller.UserId), args.id, args.status, args.outcome, args.note)
+	res.now = os.time()
+	return res
+end
+
+handlers.rep_counts = function()
+	return { ok = true, counts = PlayerReports.counts() }
+end
+
+-- tell the admins in this server about new reports and who is checking them
+PlayerReports.Notice:Connect(function(msg)
+	for _, p in ipairs(Players:GetPlayers()) do
+		if isAdmin(p.UserId) then adminNotice:FireClient(p, msg) end
+	end
+end)
 
 fn.OnServerInvoke = function(caller, action, args)
 	if not isAdmin(caller.UserId) then return { ok = false, msg = "Not an admin" } end
